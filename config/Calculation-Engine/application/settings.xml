@@ -1,0 +1,12 @@
+<settings>
+  <proxies>
+    <proxy>
+      <id>proxy</id>
+      <active>true</active>
+      <protocol>http</protocol>
+      <host>${PROXY_HOST}</host>
+      <port>${PROXY_PORT}</port>
+      <nonProxyHosts>localhost|127.0.0.1|*.gov.br|*.dataprev.gov.br</nonProxyHosts>
+    </proxy>
+  </proxies>
+</settings>

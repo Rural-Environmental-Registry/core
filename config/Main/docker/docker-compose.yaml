@@ -1,0 +1,54 @@
+services:
+  ${MAIN_PROXY_SERVICE_NAME}:
+    build:
+      context: .
+      dockerfile: Dockerfile.proxy
+    container_name: ${MAIN_PROXY_CONTAINER_NAME}
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      # - frontend_network
+      - gateway_network
+    restart: always
+    depends_on:
+      - ${CORE_FRONTEND_SERVICE_NAME}
+      - ${CORE_BACKEND_API_SERVICE_NAME}
+      - ${CORE_BACKEND_DB_SERVICE_NAME}
+      - ${AUTHENTICATION_DB_KEYCLOAK_SERVICE_NAME}
+      - ${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME}
+      - ${AUTHENTICATION_BACKEND_KEYCLOAK_SERVICE_NAME}
+      - ${AUTHENTICATION_FRONTEND_KEYCLOAK_SERVICE_NAME}
+      - ${CALCULATION_ENGINE_API_SERVICE_NAME}
+      - ${GATEWAY_SERVICE_NAME}
+      - ${GEOSERVER_SERVICE_NAME}
+
+networks:
+  # frontend_network:
+  #   driver: bridge
+  gateway_network:
+    driver: bridge
+
+volumes:
+  maven-repo:
+  gradle-cache:
+  geoserver_data:
+
+include:
+  #CORE
+  - path: ${CORE_FRONTEND_PATH}/docker-compose.yaml
+    env_file: .env
+  - path: ${CORE_BACKEND_PATH}/docker-compose.yml
+    env_file: .env
+  # Calculation Engine
+  - path: ${CALCULATION_ENGINE_PATH}/docker-compose.yml
+    env_file: .env
+  # Authentication
+  - path: ${AUTHENTICATION_PATH}/docker-compose.yml
+    env_file: .env
+  # Gateway
+  - path: ${GATEWAY_PATH}/docker-compose.yml
+    env_file: .env
+  # Geoserver
+  - path: ${GEOSERVER_PATH}/docker-compose.yml
+    env_file: .env

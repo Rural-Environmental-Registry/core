@@ -1,0 +1,18 @@
+services:
+
+  ${CORE_FRONTEND_SERVICE_NAME}:
+    # image: vuejscardpgfrontend:0.0.1
+    build:
+      dockerfile: Dockerfile
+      context: .
+      args:
+        - GITLAB_TOKEN=${GITLAB_TOKEN}
+        - HTTP_PROXY=${HTTP_PROXY}
+        - HTTPS_PROXY=${HTTPS_PROXY}
+        - NO_PROXY=${NO_PROXY}
+        - APP_VERSION=${APP_VERSION}
+    container_name: ${CORE_FRONTEND_CONTAINER_NAME}
+    restart: unless-stopped
+    networks:
+      # - frontend_network
+      - gateway_network

@@ -1,0 +1,81 @@
+services:
+  ${AUTHENTICATION_DB_KEYCLOAK_SERVICE_NAME}:
+    image: postgres:15
+    container_name: ${AUTHENTICATION_DB_KEYCLOAK_CONTAINER_NAME}
+    environment:
+      POSTGRES_DB: ${AUTHENTICATION_DB_KEYCLOAK_POSTGRES_DB}
+      POSTGRES_USER: ${AUTHENTICATION_DB_KEYCLOAK_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTHENTICATION_DB_KEYCLOAK_POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+    - authentication_network
+
+  ${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME}:
+    build: . # usa o Dockerfile na raiz do projeto (keycloak)
+    # image: keycloak-car-dpg:custom
+    container_name: ${AUTHENTICATION_BASE_KEYCLOAK_CONTAINER_NAME}
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://${AUTHENTICATION_DB_KEYCLOAK_SERVICE_NAME}:5432/${AUTHENTICATION_DB_KEYCLOAK_POSTGRES_DB}
+      KC_DB_URL_HOST: ${AUTHENTICATION_DB_KEYCLOAK_SERVICE_NAME}
+      KC_DB_URL_PORT: 5432
+      KC_DB_URL_DATABASE: ${AUTHENTICATION_DB_KEYCLOAK_POSTGRES_DB}
+      KC_DB_USERNAME: ${AUTHENTICATION_DB_KEYCLOAK_POSTGRES_USER}
+      KC_DB_PASSWORD: ${AUTHENTICATION_DB_KEYCLOAK_POSTGRES_PASSWORD}
+      KEYCLOAK_ADMIN: ${AUTHENTICATION_BASE_KEYCLOAK_ADMIN_USER}
+      KEYCLOAK_ADMIN_PASSWORD: ${AUTHENTICATION_BASE_KEYCLOAK_ADMIN_PASSWORD}
+      KC_SPI_THEME_CACHE_THEMES: "false"
+      KC_SPI_THEME_CACHE_TEMPLATES: "false"
+      KEYCLOAK_IMPORT: /opt/keycloak/data/import/realm-export.json # <- Aqui está o IMPORT
+      KC_HTTP_PORT: 8080
+      KC_HOSTNAME: ${HOSTNAME_DNS}
+      KEYCLOAK_FRONTEND_URL: ${AUTHENTICATION_BASE_KEYCLOAK_FRONTEND_URL}
+      KC_HOSTNAME_URL: ${AUTHENTICATION_BASE_KEYCLOAK_FRONTEND_URL}
+      KC_HOSTNAME_PATH: ${BASE_URL}${AUTHENTICATION_BASE_KEYCLOAK_BASE_URL}
+      KC_HOSTNAME_PORT: "${AUTHENTICATION_BASE_KEYCLOAK_KC_HOSTNAME_PORT}"
+      KC_HOSTNAME_STRICT: "${AUTHENTICATION_BASE_KEYCLOAK_KC_HOSTNAME_STRICT}"
+      KC_HOSTNAME_STRICT_HTTPS: "${AUTHENTICATION_BASE_KEYCLOAK_KC_HOSTNAME_STRICT_HTTPS}"
+      KEYCLOAK_PROFILE: preview
+      KC_FEATURES: "scripts"
+      KC_CORS: "true"
+      QUARKUS_HTTP_CORS_ENABLED: "true"
+      QUARKUS_HTTP_CORS_METHODS: "GET,PUT,POST,DELETE,OPTIONS"
+    # volumes:
+    #   - ./keycloak-import:/opt/keycloak/data/import # <- Monta a pasta local com o export
+    depends_on:
+      - ${AUTHENTICATION_DB_KEYCLOAK_SERVICE_NAME}
+    command: start --import-realm --optimized
+    networks:
+      # - frontend_network
+      - gateway_network
+      - authentication_network
+
+  ${AUTHENTICATION_FRONTEND_KEYCLOAK_SERVICE_NAME}:
+    build: ./frontend
+    container_name: ${AUTHENTICATION_FRONTEND_KEYCLOAK_CONTAINER_NAME}
+    depends_on:
+      - ${AUTHENTICATION_BACKEND_KEYCLOAK_SERVICE_NAME}
+    networks:
+    - authentication_network
+    # - frontend_network
+    - gateway_network
+
+  ${AUTHENTICATION_BACKEND_KEYCLOAK_SERVICE_NAME}:
+    build: ./cardpg
+    container_name: ${AUTHENTICATION_BACKEND_KEYCLOAK_CONTAINER_NAME}
+    depends_on:
+      - ${AUTHENTICATION_DB_KEYCLOAK_SERVICE_NAME}
+    networks:
+    - authentication_network
+    # - frontend_network
+    - gateway_network
+
+volumes:
+  postgres_data:
+
+networks:
+  authentication_network:
+    driver: bridge
+  # frontend_network:
+  #   driver: bridge

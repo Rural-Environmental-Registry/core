@@ -1,0 +1,104 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.2'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+sourceSets {
+    tools {
+        java.srcDir 'src/tools/java'
+    }
+}
+
+configurations {
+    toolsImplementation.extendsFrom implementation
+}
+
+group = 'br.car'
+version = '${CORE_BACKEND_VERSION}'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	maven { url 'https://repo.osgeo.org/repository/geotools-releases/' }
+	mavenCentral()
+}
+
+dependencies {
+	runtimeOnly 'org.postgresql:postgresql'
+
+	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-database-postgresql'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4'
+	implementation 'org.mapstruct:mapstruct:1.6.3'
+	implementation 'org.locationtech.jts:jts-core:1.20.0'
+	implementation 'org.geotools:gt-geojson:32.1'
+	implementation 'com.google.code.gson:gson:2.12.1'
+	implementation 'de.grundid.opendatalab:geojson-jackson:1.14'
+	implementation 'org.hibernate.orm:hibernate-spatial:6.6.5.Final'
+	implementation 'net.sf.jasperreports:jasperreports:7.0.2'
+	implementation 'net.sf.jasperreports:jasperreports-pdf:7.0.2' 
+	implementation 'net.sf.jasperreports:jasperreports-fonts:7.0.2'
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'io.projectreactor.netty:reactor-netty-http'
+	toolsImplementation 'net.sf.jasperreports:jasperreports:7.0.2'
+
+	implementation 'com.fasterxml.jackson.core:jackson-core:2.18.4'
+	implementation 'com.fasterxml.jackson.core:jackson-annotations:2.18.4'
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.4'
+
+	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+
+	compileOnly 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile) {
+	options.annotationProcessorPath = configurations.annotationProcessor
+}
+
+tasks.named('resolveMainClassName') {
+    dependsOn ':copyCompiledJasper'
+}
+
+tasks.named('jar') {
+    dependsOn ':copyCompiledJasper'
+}
+
+task compileJasperReports(type: JavaExec) {
+    group = "jasper"
+    description = "Compila arquivos .jrxml para .jasper"
+		classpath = sourceSets.main.runtimeClasspath + sourceSets.tools.runtimeClasspath
+    mainClass = 'tools.ReportCompiler'
+    args "${DOLLAR}projectDir/src/main/resources/reports", "${DOLLAR}buildDir/generated-jasper"
+}
+
+task copyCompiledJasper(type: Copy) {
+    dependsOn compileJasperReports
+    from "${DOLLAR}buildDir/generated-jasper"
+    into "${DOLLAR}buildDir/resources/main/reports"
+}

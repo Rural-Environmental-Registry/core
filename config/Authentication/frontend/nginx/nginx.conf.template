@@ -1,0 +1,14 @@
+server {
+  listen 80;
+  server_name ${HOSTNAME_DNS};
+  root /usr/share/nginx/html;
+  index index.html;
+
+  location = ${BASE_URL}${AUTHENTICATION_FRONTEND_KEYCLOAK_BASE_URL} {
+    return 301 ${BASE_URL}${AUTHENTICATION_FRONTEND_KEYCLOAK_BASE_URL}/;
+  }
+
+  location ${BASE_URL}${AUTHENTICATION_FRONTEND_KEYCLOAK_BASE_URL}/ {
+    try_files ${DOLLAR}uri ${DOLLAR}uri/ ${BASE_URL}${AUTHENTICATION_FRONTEND_KEYCLOAK_BASE_URL}/index.html;
+  }
+}

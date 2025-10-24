@@ -1,0 +1,48 @@
+{
+  "header": {
+    "title_text": "RECEIPT OF REGISTRATION OF RURAL PROPERTY IN RER",
+    "registry_code_label": "RER Registry",
+    "registry_at_date_label": "Registered at"
+  },
+  "main_property_information": {
+    "title_text": "RECEIPT OF REGISTRATION OF RURAL PROPERTY IN RER",
+    "rural_property_name_label": "Rural Property Name",
+    "municipality_label": "Municipality",
+    "state_distric_label": "State/District",
+    "geographic_coordinates_centroid_text": "Geographic Coordinates of the Centroid of the Rural",
+    "latitude_label": "Latitude",
+    "longitude_label": "Longitude",
+    "total_area_of_property_label": "Total Area (ha) of Rural Property"
+  },
+  "general_information_title": "GENERAL INFORMATION",
+  "grafic_representation_title": "GRAPHIC REPRESENTATION",
+  "owner_holder_information": {
+    "title_text": "IDENTIFICATION OF THE OWNER/HOLDER",
+    "identifier_label": "Identifier",
+    "name_label": "Name"
+  },
+  "land_documents": {
+    "title_text": "LAND DOCUMENTS OF THE PROPERTY",
+    "registered_property_name_title": "Registered Property Name",
+    "basic_information": {
+      "document_type_label": "Document Type",
+      "area_label": "Area",
+      "has_legal_reserve_label": "Has Legal Reserve?"
+    },
+    "property_documents_attributes_title": "Property Documents Attributes",
+    "attributes": {
+      "holdingtype_label": "Holding Type",
+      "deed_label": "Deed",
+      "documentdate_label": "Document Date",
+      "book_label": "Book",
+      "page_label": "Page",
+      "state_of_notary_office_label": "State of Notary Office",
+      "city_of_notary_office_label": "City of Notary Office",
+      "property_certification_label": "Property Certification",
+      "national_rural_land_registration_number_label": "National Rural Land Registration Number"
+    }
+  },
+  "footer": {
+    "main_footer_text": "RER - Rural Environmental Registry"
+  }
+}

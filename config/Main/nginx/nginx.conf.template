@@ -1,0 +1,82 @@
+ 
+worker_processes  auto;
+ 
+error_log  /var/log/nginx/error.log notice;
+pid        /tmp/nginx.pid;
+ 
+ 
+events {
+    worker_connections  1024;
+}
+ 
+http {
+  include       mime.types;
+  default_type  application/octet-stream;
+
+  log_format main '${DOLLAR}remote_addr - ${DOLLAR}remote_user [${DOLLAR}time_local] "${DOLLAR}request" '
+                    '${DOLLAR}status ${DOLLAR}body_bytes_sent "${DOLLAR}http_referer" '
+                    '"${DOLLAR}http_user_agent" "${DOLLAR}http_x_forwarded_for"';
+
+  access_log  /var/log/nginx/access.log  main;
+
+  sendfile            on;
+  tcp_nopush          on;
+  tcp_nodelay         on;
+  keepalive_timeout   65;
+  types_hash_max_size 2048;
+
+  # Otimizações para proxy
+  proxy_http_version      1.1;
+  proxy_cache_bypass      ${DOLLAR}http_upgrade;
+  proxy_redirect          off;
+  
+  # Timeouts
+  proxy_connect_timeout   75s;
+  proxy_read_timeout      300s;
+  proxy_send_timeout      300s;
+
+  # Buffers
+  proxy_buffer_size       128k;
+  proxy_buffers           4 256k;
+  proxy_busy_buffers_size 256k;
+
+  server {
+    listen       80;
+    server_name  ${HOSTNAME_DNS};
+    client_max_body_size 10M;
+
+    location = ${BASE_URL}${GEOSERVER_BASE_URL} {
+      return 301 ${BASE_URL}${GEOSERVER_BASE_URL}/;
+    }
+
+    location ^~ ${BASE_URL}${GEOSERVER_BASE_URL}/ {
+      proxy_pass http://geoserver:8080;
+      proxy_set_header Host ${DOLLAR}host;
+      proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+      proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto ${HTTP_HTTPS};
+      proxy_set_header X-Forwarded-Host ${DOLLAR}host;
+      proxy_set_header X-Forwarded-Prefix ${BASE_URL};
+      proxy_set_header X-Script-Name ${BASE_URL}${GEOSERVER_BASE_URL};
+    }
+
+    location ^~ ${BASE_URL}/ {
+      proxy_pass http://${GATEWAY_SERVICE_NAME}:8080;
+      proxy_set_header Host ${DOLLAR}host;
+      proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+      proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto ${HTTP_HTTPS};
+      proxy_set_header X-Forwarded-Host ${DOLLAR}host;
+      proxy_set_header X-Forwarded-Prefix ${BASE_URL};
+    }
+
+    location / {
+      return 301 ${BASE_URL};
+    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+      root   /usr/share/nginx/html;
+    }
+  }
+}

@@ -1,0 +1,15 @@
+# .dockerignore para projetos Java (Core-Backend, Authentication Backend, Calculation Engine, Gateway)
+target/
+build/
+.gradle/
+.mvn/
+mvnw*
+gradlew*
+.git/
+.gitignore
+*.iml
+.idea/
+*.log
+.DS_Store
+.env
+README.md

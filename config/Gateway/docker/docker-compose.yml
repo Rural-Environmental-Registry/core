@@ -1,0 +1,67 @@
+services:
+  # ${GATEWAY_SERVICE_NAME}_builder:
+  #   image: maven:3.9.8-eclipse-temurin-21
+  #   container_name: ${GATEWAY_CONTAINER_NAME}_builder
+  #   network_mode: "host"
+  #   working_dir: /app
+  #   volumes:
+  #     - ./:/app
+  #     - ./settings.xml:/root/.m2/settings.xml
+  #     - maven-repo:/root/.m2
+  #   command: mvn clean package -DskipTests
+  #   environment:
+  #     - HTTP_PROXY=${HTTP_PROXY}
+  #     - HTTPS_PROXY=${HTTPS_PROXY}
+  #     - NO_PROXY=${NO_PROXY}
+  #   restart: "no"
+
+  # ${GATEWAY_SERVICE_NAME}:
+  #   image: eclipse-temurin:21-jre-jammy
+  #   container_name: ${GATEWAY_CONTAINER_NAME}
+  #   depends_on:
+  #     ${GATEWAY_SERVICE_NAME}_builder:
+  #       condition: service_completed_successfully
+  #   working_dir: /app
+  #   volumes:
+  #     - maven-repo:/root/.m2
+  #     - ./target:/app
+  #   command: java -jar ${GATEWAY_PROJECT_NAME}-${GATEWAY_VERSION}.jar
+  #   environment:
+  #     - HTTP_PROXY=${HTTP_PROXY}
+  #     - HTTPS_PROXY=${HTTPS_PROXY}
+  #     - NO_PROXY=${NO_PROXY}
+  #   # ports:
+  #   #   - "8080:8080"
+  #   networks:
+  #     - gateway_network
+  #   restart: always
+
+  ${GATEWAY_SERVICE_NAME}:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        HTTP_PROXY: ${HTTP_PROXY}
+        HTTPS_PROXY: ${HTTPS_PROXY}
+        NO_PROXY: ${NO_PROXY}
+    container_name: ${GATEWAY_CONTAINER_NAME}
+    volumes:
+      - maven-repo:/root/.m2
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - NO_PROXY=${NO_PROXY}
+    # ports:
+    #   - "8080:8080"
+    networks:
+      - gateway_network
+    restart: always
+    depends_on:
+      - ${CORE_FRONTEND_SERVICE_NAME}
+      - ${CORE_BACKEND_API_SERVICE_NAME}
+      - ${CORE_BACKEND_DB_SERVICE_NAME}
+      - ${AUTHENTICATION_DB_KEYCLOAK_SERVICE_NAME}
+      - ${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME}
+      - ${AUTHENTICATION_BACKEND_KEYCLOAK_SERVICE_NAME}
+      - ${AUTHENTICATION_FRONTEND_KEYCLOAK_SERVICE_NAME}
+      - ${CALCULATION_ENGINE_API_SERVICE_NAME}

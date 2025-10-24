@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: cardpg
+
+server:
+  port: 8081
+  address: 0.0.0.0
+  servlet:
+    contextPath: ${BASE_URL}${AUTHENTICATION_BACKEND_KEYCLOAK_BASE_URL}
+
+keycloak:
+  url: http://${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME}:8080${BASE_URL}${AUTHENTICATION_BASE_KEYCLOAK_BASE_URL}
+  realm: car-dpg
+  client-id: api-service
+  client-secret: YvM5Ymcx5zjcaWAhK4ER2eJw7nI7H50P
+
+backend:
+  base-url: http://${CORE_BACKEND_API_SERVICE_NAME}:8080${CORE_BACKEND_API_BASE_URL}

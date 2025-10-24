@@ -1,0 +1,18 @@
+services:
+  ${GEOSERVER_SERVICE_NAME}:
+    image: docker.osgeo.org/geoserver:2.28.x
+    container_name: ${GEOSERVER_CONTAINER_NAME}
+    volumes:
+      - geoserver_data:/opt/geoserver_data
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - NO_PROXY=${NO_PROXY}
+      - PROXY_BASE_URL=${APP_URL}${GEOSERVER_BASE_URL}
+      - WEBAPP_CONTEXT=${BASE_URL}${GEOSERVER_BASE_URL}
+      - GEOSERVER_CSRF_DISABLED=true
+    networks:
+      - gateway_network
+      - geo_calc_network
+      - core-backend-network
+    restart: always

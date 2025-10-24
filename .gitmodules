@@ -1,0 +1,23 @@
+[submodule "Core-Frontend"]
+	path = Core-Frontend
+	url = https://inovacao.dataprev.gov.br/git/car-dpg/vuejs-car-dpg-frontend.git
+	branch = hml
+[submodule "Core-Backend"]
+	path = Core-Backend
+	url = https://inovacao.dataprev.gov.br/git/car-dpg/car-dpg-backend.git
+	branch = hml
+[submodule "Calculation-Engine"]
+	path = Calculation-Engine
+	url = https://inovacao.dataprev.gov.br/git/car-dpg/calculation-engine.git
+[submodule "Authentication"]
+	path = Authentication
+	url = https://inovacao.dataprev.gov.br/git/car-dpg/admin-panel.git
+	branch = develop
+[submodule "Gateway"]
+	path = Gateway
+	url = https://inovacao.dataprev.gov.br/git/car-dpg/spring-cloud-gateway.git
+	branch = dev
+[submodule "Map-Component"]
+	path = Map-Component
+	url = https://inovacao.dataprev.gov.br/git/car-dpg/map-component.git
+	branch = v3.0

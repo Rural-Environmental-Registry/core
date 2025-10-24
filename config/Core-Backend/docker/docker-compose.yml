@@ -1,0 +1,91 @@
+services:
+  ${CORE_BACKEND_DB_SERVICE_NAME}:
+    image: postgis/postgis:latest
+    container_name: ${CORE_BACKEND_DB_CONTAINER_NAME}
+    environment:
+      POSTGRES_DB: ${CORE_BACKEND_DB_NAME}
+      POSTGRES_USER: ${CORE_BACKEND_DB_USER}
+      POSTGRES_PASSWORD: ${CORE_BACKEND_DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - car-db-data:/var/lib/postgresql/data
+    networks:
+      - core-backend-network
+
+  # ${CORE_BACKEND_API_SERVICE_NAME}_builder:
+  #   image: gradle:8.12.1-jdk21
+  #   container_name: ${CORE_BACKEND_API_SERVICE_NAME}_builder
+  #   network_mode: "host"
+  #   working_dir: /app
+  #   volumes:
+  #     - ./:/app
+  #     - gradle-cache:/home/gradle/.gradle  # cache para dependências
+  #   command: ./gradlew clean compileJasperReports copyCompiledJasper build -x test --no-daemon
+  #   environment:
+  #     - GRADLE_OPTS=-Dhttps.proxyHost=${PROXY_HOST} -Dhttps.proxyPort=${PROXY_PORT} -Dhttp.proxyHost=${PROXY_HOST} -Dhttp.proxyPort=${PROXY_PORT}
+  #     - HTTP_PROXY=http://10.31.220.23:3128
+  #     - HTTPS_PROXY=http://10.31.220.23:3128
+  #     - NO_PROXY=localhost,127.0.0.1,gov.br,dataprev.gov.br
+  #   restart: "no"
+
+  # ${CORE_BACKEND_API_SERVICE_NAME}:
+  #   image: eclipse-temurin:21-jre-jammy
+  #   container_name: ${CORE_BACKEND_API_CONTAINER_NAME}
+  #   working_dir: /app
+  #   depends_on:
+  #     ${CORE_BACKEND_API_SERVICE_NAME}_builder:
+  #       condition: service_completed_successfully
+  #     ${CORE_BACKEND_DB_SERVICE_NAME}:
+  #       condition: service_started
+  #   volumes:
+  #     - gradle-cache:/home/gradle/.gradle
+  #     - ./build:/app/build  # JAR gerado pelo builder
+  #   command: java -jar ./build/libs/${CORE_BACKEND_PROJECT_NAME}-${CORE_BACKEND_VERSION}.jar
+  #   environment:
+  #     SPRING_DATASOURCE_URL: "jdbc:postgresql://${CORE_BACKEND_DB_SERVICE_NAME}:5432/${CORE_BACKEND_DB_NAME}"
+  #     SPRING_DATASOURCE_USERNAME: ${CORE_BACKEND_DB_USER}
+  #     SPRING_DATASOURCE_PASSWORD: ${CORE_BACKEND_DB_PASSWORD}
+  #     FRONTEND_URLS: ${CORE_BACKEND_API_FRONTEND_URLS}
+  #     HASH_PREFIX: ${CORE_BACKEND_API_HASH_PREFIX}
+  #     RECEIPT_LOGO_PATH: ${CORE_BACKEND_API_RECEIPT_LOGO_PATH}
+  #     GENERAL_INFORMATION_RECEIPT_PATH: ${CORE_BACKEND_API_GENERAL_INFORMATION_RECEIPT_PATH}
+  #     REPORT_PARAMS_RECEIPT_JSON: ${CORE_BACKEND_API_REPORT_PARAMS_RECEIPT_JSON}
+  #     HTTP_PROXY: ${HTTP_PROXY}
+  #     HTTPS_PROXY: ${HTTPS_PROXY}
+  #     NO_PROXY: ${NO_PROXY}
+  #   networks:
+  #     - core-backend-network
+  #     # - frontend_network
+  #     - gateway_network
+
+  ${CORE_BACKEND_API_SERVICE_NAME}:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${CORE_BACKEND_API_CONTAINER_NAME}
+    depends_on:
+      - ${CORE_BACKEND_DB_SERVICE_NAME}
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://${CORE_BACKEND_DB_SERVICE_NAME}:5432/${CORE_BACKEND_DB_NAME}"
+      SPRING_DATASOURCE_USERNAME: ${CORE_BACKEND_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${CORE_BACKEND_DB_PASSWORD}
+      FRONTEND_URLS: ${CORE_BACKEND_API_FRONTEND_URLS}
+      HASH_PREFIX: ${CORE_BACKEND_API_HASH_PREFIX}
+      RECEIPT_LOGO_PATH: ${CORE_BACKEND_API_RECEIPT_LOGO_PATH}
+      GENERAL_INFORMATION_RECEIPT_PATH: ${CORE_BACKEND_API_GENERAL_INFORMATION_RECEIPT_PATH}
+      REPORT_PARAMS_RECEIPT_JSON: ${CORE_BACKEND_API_REPORT_PARAMS_RECEIPT_JSON}
+      DEFAULT_LOCATION_ZONE: ${CORE_BACKEND_API_DEFAULT_LOCATION_ZONE}
+      HTTP_PROXY: ${HTTP_PROXY}
+      HTTPS_PROXY: ${HTTPS_PROXY}
+      NO_PROXY: ${NO_PROXY}
+    networks:
+      - core-backend-network
+      - gateway_network
+
+networks:
+  core-backend-network:
+    driver: bridge
+
+volumes:
+  car-db-data:

@@ -1,0 +1,71 @@
+services:
+  ${CALCULATION_ENGINE_DB_SERVICE_NAME}:
+    image: postgres:17
+    container_name: ${CALCULATION_ENGINE_DB_CONTAINER_NAME}
+    environment:
+      POSTGRES_DB: ${CALCULATION_ENGINE_POSTGRES_DB}
+      POSTGRES_USER: ${CALCULATION_ENGINE_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${CALCULATION_ENGINE_POSTGRES_PASSWORD}
+    volumes:
+      - calculator_engine_data:/var/lib/postgresql/data
+      - ./src/main/resources/db_structure/calculator_engine:/docker-entrypoint-initdb.d
+    # ports:
+    #   - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CALCULATION_ENGINE_POSTGRES_USER} -d ${CALCULATION_ENGINE_POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - geo_calc_network
+
+  ${CALCULATION_ENGINE_POSTGIS_DB_SERVICE_NAME}:
+    image: postgis/postgis:17-3.5-alpine
+    container_name: ${CALCULATION_ENGINE_POSTGIS_DB_CONTAINER_NAME}
+    environment:
+      POSTGRES_DB: ${CALCULATION_ENGINE_POSTGIS_DB_NAME}
+      POSTGRES_USER: ${CALCULATION_ENGINE_POSTGIS_DB_USER}
+      POSTGRES_PASSWORD: ${CALCULATION_ENGINE_POSTGIS_DB_PASSWORD}
+    volumes:
+      - postgis_calculator_data:/var/lib/postgresql/data
+      - ./src/main/resources/db_structure/postgis_calculator:/docker-entrypoint-initdb.d
+    # ports:
+    #   - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CALCULATION_ENGINE_POSTGIS_DB_USER} -d ${CALCULATION_ENGINE_POSTGIS_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - geo_calc_network
+
+  ${CALCULATION_ENGINE_API_SERVICE_NAME}:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # image: dpg/geo_calculation_engine:0.0.1
+    container_name: ${CALCULATION_ENGINE_API_CONTAINER_NAME}
+    # ports:
+    #   - "8080:8080"
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://${CALCULATION_ENGINE_POSTGRES_USER}:${CALCULATION_ENGINE_POSTGRES_PASSWORD}@${CALCULATION_ENGINE_DB_SERVICE_NAME}:5432/${CALCULATION_ENGINE_POSTGRES_DB}?currentSchema=engine_configuration
+      SPRING_R2DBC_ADDITIONAL_DATASOURCES_CALC_URL: r2dbc:postgresql://${CALCULATION_ENGINE_POSTGIS_DB_USER}:${CALCULATION_ENGINE_POSTGIS_DB_PASSWORD}@${CALCULATION_ENGINE_POSTGIS_DB_SERVICE_NAME}:5432/${CALCULATION_ENGINE_POSTGIS_DB_NAME}
+    depends_on:
+      calculator-engine-db:
+        condition: service_healthy
+      postgis-calculator-db:
+        condition: service_healthy
+    networks:
+      - geo_calc_network
+      # - frontend_network
+      - gateway_network
+
+volumes:
+  calculator_engine_data:
+  postgis_calculator_data:
+
+networks:
+  geo_calc_network:
+    driver: bridge
+  # frontend_network:
+  #   driver: bridge

@@ -1,0 +1,62 @@
+spring:
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          "[/**]":
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+      default-filters:
+        - AddRequestHeader=X-Forwarded-Host, ${HOSTNAME_DNS}
+        - AddRequestHeader=X-Forwarded-Proto, ${HTTP_HTTPS}
+      routes:
+        - id: ${AUTHENTICATION_FRONTEND_KEYCLOAK_SERVICE_NAME}
+          uri: http://${AUTHENTICATION_FRONTEND_KEYCLOAK_SERVICE_NAME}
+          predicates:
+            - Path=${BASE_URL}${AUTHENTICATION_FRONTEND_KEYCLOAK_BASE_URL}/**
+          filters:
+            - RewriteResponseHeader=Location, http://${AUTHENTICATION_FRONTEND_KEYCLOAK_SERVICE_NAME}(?<segment>/?.*), http://${HOSTNAME_DNS}${BASE_URL}${AUTHENTICATION_FRONTEND_KEYCLOAK_BASE_URL}${DOLLAR}{segment}
+
+        - id: ${CALCULATION_ENGINE_API_SERVICE_NAME}
+          uri: http://${CALCULATION_ENGINE_API_SERVICE_NAME}:8080
+          predicates:
+            - Path=${BASE_URL}${CALCULATION_ENGINE_API_BASE_URL}/**
+          filters:
+            - StripPrefix=2 # remove ${BASE_URL}/${CALCULATION_ENGINE_API_BASE_URL}
+
+        - id: keycloak
+          uri: http://${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME}:8080
+          predicates:
+            - Path=${BASE_URL}${AUTHENTICATION_BASE_KEYCLOAK_BASE_URL}/**
+          filters:
+            - RewriteResponseHeader=Location, http://${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME}(?<segment>/?.*), http://${HOSTNAME_DNS}${BASE_URL}${AUTHENTICATION_BASE_KEYCLOAK_BASE_URL}${DOLLAR}{segment}
+
+        - id: ${AUTHENTICATION_BACKEND_KEYCLOAK_SERVICE_NAME}
+          uri: http://${AUTHENTICATION_BACKEND_KEYCLOAK_SERVICE_NAME}:8081
+          predicates:
+            - Path=${BASE_URL}${AUTHENTICATION_BACKEND_KEYCLOAK_BASE_URL}/**
+          filters:
+            - RewriteResponseHeader=Location, http://${AUTHENTICATION_BACKEND_KEYCLOAK_SERVICE_NAME}(?<segment>/?.*), http://${HOSTNAME_DNS}${BASE_URL}${AUTHENTICATION_BACKEND_KEYCLOAK_BASE_URL}${DOLLAR}{segment}
+
+        - id: ${CORE_BACKEND_API_SERVICE_NAME}
+          uri: http://${CORE_BACKEND_API_SERVICE_NAME}:8080
+          predicates:
+            - Path=${BASE_URL}${CORE_BACKEND_API_CONTEXT_PATH}/**
+          filters:
+            - RewriteResponseHeader=Location, http://${CORE_BACKEND_API_SERVICE_NAME}(?<segment>/?.*), http://${HOSTNAME_DNS}${BASE_URL}${CORE_BACKEND_API_CONTEXT_PATH}${DOLLAR}{segment}
+
+        - id: ${CORE_FRONTEND_SERVICE_NAME}
+          uri: http://${CORE_FRONTEND_SERVICE_NAME}
+          predicates:
+            - Path=/**
+          filters:
+            - RewriteResponseHeader=Location, http://${CORE_FRONTEND_SERVICE_NAME}(?<segment>/?.*), http://${HOSTNAME_DNS}${DOLLAR}{segment}
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
