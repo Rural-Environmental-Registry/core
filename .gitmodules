@@ -1,23 +1,23 @@
-[submodule "Core-Frontend"]
-	path = Core-Frontend
-	url = https://inovacao.dataprev.gov.br/git/car-dpg/vuejs-car-dpg-frontend.git
-	branch = hml
-[submodule "Core-Backend"]
-	path = Core-Backend
-	url = https://inovacao.dataprev.gov.br/git/car-dpg/car-dpg-backend.git
-	branch = hml
-[submodule "Calculation-Engine"]
-	path = Calculation-Engine
-	url = https://inovacao.dataprev.gov.br/git/car-dpg/calculation-engine.git
-[submodule "Authentication"]
-	path = Authentication
-	url = https://inovacao.dataprev.gov.br/git/car-dpg/admin-panel.git
-	branch = develop
-[submodule "Gateway"]
-	path = Gateway
-	url = https://inovacao.dataprev.gov.br/git/car-dpg/spring-cloud-gateway.git
-	branch = dev
-[submodule "Map-Component"]
-	path = Map-Component
-	url = https://inovacao.dataprev.gov.br/git/car-dpg/map-component.git
-	branch = v3.0
+[submodule "authentication"]
+	path = authentication
+	url = https://github.com/Rural-Environmental-Registry/authentication.git
+	branch = main
+[submodule "backend"]
+	path = backend
+	url = https://github.com/Rural-Environmental-Registry/backend.git
+	branch = main
+[submodule "calc_engine"]
+	path = calc_engine
+	url = https://github.com/Rural-Environmental-Registry/calc_engine.git
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/Rural-Environmental-Registry/frontend.git
+	branch = main
+[submodule "gateway"]
+	path = gateway
+	url = https://github.com/Rural-Environmental-Registry/gateway.git
+	branch = main
+[submodule "map_component"]
+	path = map_component
+	url = https://github.com/Rural-Environmental-Registry/map_component.git
+	branch = main
