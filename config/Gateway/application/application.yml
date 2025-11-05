@@ -50,12 +50,25 @@ spring:
           filters:
             - RewriteResponseHeader=Location, http://${CORE_BACKEND_API_SERVICE_NAME}(?<segment>/?.*), http://${HOSTNAME_DNS}${BASE_URL}${CORE_BACKEND_API_CONTEXT_PATH}${DOLLAR}{segment}
 
+        - id: actuator
+          uri: http://localhost:8080
+          predicates:
+            - Path=${BASE_URL}/gateway/actuator/**
+          filters:
+            - StripPrefix=1 # remove /gateway
+
         - id: ${CORE_FRONTEND_SERVICE_NAME}
           uri: http://${CORE_FRONTEND_SERVICE_NAME}
           predicates:
             - Path=/**
           filters:
             - RewriteResponseHeader=Location, http://${CORE_FRONTEND_SERVICE_NAME}(?<segment>/?.*), http://${HOSTNAME_DNS}${DOLLAR}{segment}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
 
 logging:
   level:

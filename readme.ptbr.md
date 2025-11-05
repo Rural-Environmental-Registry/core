@@ -1,4 +1,6 @@
-# ![RER Logo](images/logo-rer-color.png)
+<p align="center">
+  <img src="images/logo-rer-color.png" alt="RER Logo" width="300">
+</p>
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.3-brightgreen.svg)](https://spring.io/projects/spring-boot) [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-PostGIS-blue.svg)](https://postgis.net/) [![R2DBC](https://img.shields.io/badge/R2DBC-Reactive-purple.svg)](https://r2dbc.io/) [![Vue.js](https://img.shields.io/badge/Vue.js-3-green.svg)](https://vuejs.org/) [![Docker](https://img.shields.io/badge/Docker-24+-blue.svg)](https://www.docker.com/)
 
@@ -53,6 +55,8 @@ O RER é uma plataforma integrada que combina tecnologias modernas para fornecer
 - 🚪 Gateway de API para roteamento inteligente
 - 🧮 Motor de cálculos para processamento de dados
 - 🐳 Containerização completa com Docker
+
+Saiba mais sobre o sistema acessando nosso [ambiente de demonstração](https://rer.dataprev.gov.br).
 
 ---
 

@@ -1,18 +1,60 @@
 services:
   ${GEOSERVER_SERVICE_NAME}:
-    image: docker.osgeo.org/geoserver:2.28.x
+    build: .
     container_name: ${GEOSERVER_CONTAINER_NAME}
     volumes:
-      - geoserver_data:/opt/geoserver_data
+      - geoserver_data:/var/geoserver/datadir
     environment:
+      - GEOSERVER_DATA_DIR=/var/geoserver/datadir 
+      - GEOSERVER_ADMIN_USER=${GEOSERVER_ADMIN_USER}
+      - GEOSERVER_ADMIN_PASSWORD=${GEOSERVER_ADMIN_PASSWORD}
       - HTTP_PROXY=${HTTP_PROXY}
       - HTTPS_PROXY=${HTTPS_PROXY}
       - NO_PROXY=${NO_PROXY}
-      - PROXY_BASE_URL=${APP_URL}${GEOSERVER_BASE_URL}
+      - PROXY_BASE_URL=${HTTP_HTTPS}://${HOSTNAME_DNS}${BASE_URL}${GEOSERVER_BASE_URL}
       - WEBAPP_CONTEXT=${BASE_URL}${GEOSERVER_BASE_URL}
       - GEOSERVER_CSRF_DISABLED=true
+      - USE_CORS_ENABLED_STRUCTURE=true
+      - CORS_ENABLED=true
+      - CORS_ALLOWED_ORIGINS=*
+      - CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE,HEAD,OPTIONS
+      - CORS_ALLOWED_HEADERS=*
+      - WORKSPACE_NAME=${GEOSERVER_WORKSPACE_NAME}
+      - DATASTORE_NAME=${GEOSERVER_DATASTORE_NAME}
+      - DB_HOST=${GEOSERVER_DB_HOST}
+      - DB_PORT=${GEOSERVER_DB_PORT}
+      - DB_NAME=${GEOSERVER_DB_NAME}
+      - DB_SCHEMA=${GEOSERVER_DB_SCHEMA}
+      - DB_USER=${GEOSERVER_DB_USER}
+      - DB_PASSWORD=${GEOSERVER_DB_PASSWORD}
     networks:
       - gateway_network
       - geo_calc_network
       - core-backend-network
     restart: always
+    extra_hosts:
+        - "host.docker.internal:host-gateway"
+
+  geoserver-init:
+    image: docker:27-cli
+    container_name: geoserver-init
+    depends_on:
+      - ${GEOSERVER_SERVICE_NAME}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # acesso ao daemon
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "docker exec ${GEOSERVER_SERVICE_NAME} bash -c '/opt/populate_geoserver.sh'"
+ 
+# echo '⏳ Aguardando GeoServer iniciar...' &&
+# for i in $(seq 1 30); do
+#   if docker exec ${GEOSERVER_SERVICE_NAME} curl -fs http://localhost:8080/geoserver/web >/dev/null 2>&1; then
+#     echo '✅ GeoServer está pronto! Executando script...' &&
+#     echo '🏁 Script concluído!' &&
+#     exit 0
+#   fi
+#   echo '⏱️ Tentativa $i/30: ainda não respondeu...' &&
+#   sleep 5
+# done &&
+# echo '❌ GeoServer não ficou pronto a tempo.' &&
+# exit 1"

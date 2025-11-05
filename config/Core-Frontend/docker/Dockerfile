@@ -3,8 +3,9 @@
 # ============================
 FROM node:18-alpine AS dependencies
 
-# Instalar pacotes necessários
-RUN apk add --no-cache \
+# Atualizar pacotes para corrigir CVEs e instalar necessários
+RUN apk update && apk upgrade --no-cache && \
+    apk add --no-cache \
     git \
     jq
 
@@ -51,6 +52,10 @@ RUN sh scripts/generate-config.sh
 # 4) Runtime Stage
 # ============================
 FROM nginx:alpine
+
+# Atualizar pacotes para corrigir CVEs
+RUN apk update && apk upgrade --no-cache
+
 COPY --from=build /app/dist/ /usr/share/nginx/html${BASE_URL}
 RUN rm -f /etc/nginx/conf.d/default.conf
 COPY ./nginx.conf /etc/nginx/nginx.conf

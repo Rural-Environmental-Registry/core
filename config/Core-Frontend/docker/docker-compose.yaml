@@ -1,7 +1,7 @@
 services:
 
   ${CORE_FRONTEND_SERVICE_NAME}:
-    # image: vuejscardpgfrontend:0.0.1
+    image: rer-frontend:latest
     build:
       dockerfile: Dockerfile
       context: .

@@ -1,5 +1,6 @@
 services:
   ${MAIN_PROXY_SERVICE_NAME}:
+    image: rer-main:latest
     build:
       context: .
       dockerfile: Dockerfile.proxy

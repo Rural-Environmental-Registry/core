@@ -44,6 +44,7 @@
 	<parameter name="property_longitude" class="java.lang.Double"/>
 	<parameter name="ISSUE_DATE" class="java.lang.String"/>
 	<parameter name="CREATED_AT" class="java.lang.String"/>
+	<parameter name="WATERMARK_IMAGE_PATH" class="java.lang.String"/>
 	<field name="propertyName" class="java.lang.String"/>
 	<field name="code" class="java.lang.String"/>
 	<field name="createdAt" class="java.time.Instant"/>
@@ -53,7 +54,11 @@
 	<field name="owners" class="java.util.List&lt;br.car.registration.api.v1.response.OwnerRes>"/>
 	<field name="documents" class="java.util.List&lt;br.car.registration.api.v1.response.PropertyDocumentRes>"/>
 	<variable name="Variable_1" class="java.lang.String"/>
-	<background height="802" splitType="Stretch"/>
+	<background height="802">
+		<element kind="image" uuid="826e1d5a-6688-49e2-bfc3-d9337261b086" mode="Transparent" x="0" y="0" width="555" height="802" scaleImage="RetainShape" hImageAlign="Center" vImageAlign="Middle" onErrorType="Blank">
+			<expression><![CDATA[$P{WATERMARK_IMAGE_PATH}]]></expression>
+		</element>
+	</background>
 	<pageHeader height="142" splitType="Stretch">
 		<element kind="frame" uuid="d60ed41e-2078-4f14-aee1-7cd6078f9e77" x="0" y="0" width="555" height="142">
 			<element kind="image" uuid="d34856ec-6da2-4a00-8032-486e42e19227" x="227" y="0" width="111" height="79" scaleImage="RetainShape" onErrorType="Icon" hImageAlign="Center" vImageAlign="Middle">
@@ -85,7 +90,7 @@
 	</pageHeader>
 	<columnHeader splitType="Stretch"/>
 	<detail>
-		<band height="412" splitType="Stretch">
+		<band height="594" splitType="Stretch">
 			<element kind="frame" uuid="dec77cf2-1014-4b3e-9934-7f0c65a83bce" positionType="Float" stretchType="ElementGroupBottom" x="0" y="47" width="555" height="365">
 				<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				<element kind="textField" uuid="9f01037d-68f5-435b-bd5b-e45452d74e08" x="0" y="0" width="422" height="18" fontName="SansSerif" fontSize="10.0" blankWhenNull="true" bold="false" vTextAlign="Middle">
@@ -303,10 +308,10 @@
 										</datasetRun>
 										<contents height="18" width="555">
 											<element kind="textField" uuid="3c69b593-ad7b-4a75-a39d-123b3908629d" x="0" y="0" width="260" height="18" vTextAlign="Middle">
+												<printWhenExpression><![CDATA[$F{value} != null && !$F{value}.equalsIgnoreCase("null")]]></printWhenExpression>
 												<expression><![CDATA[" "+$P{attributesLabels}.getOrDefault(
             $F{name}.toLowerCase()+ "_label", $F{name}.toUpperCase().replace("_", " ")
         )]]></expression>
-												<printWhenExpression><![CDATA[$F{value} != null && !$F{value}.equalsIgnoreCase("null")]]></printWhenExpression>
 												<box>
 													<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 													<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -315,8 +320,8 @@
 												</box>
 											</element>
 											<element kind="textField" uuid="0975004a-318f-4199-860f-d68092b41b85" x="260" y="0" width="295" height="18" vTextAlign="Middle">
-												<expression><![CDATA[" "+$F{value}.toUpperCase()]]></expression>
 												<printWhenExpression><![CDATA[$F{value} != null && !$F{value}.equalsIgnoreCase("null")]]></printWhenExpression>
+												<expression><![CDATA[" "+$F{value}.toUpperCase()]]></expression>
 												<box>
 													<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 													<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>

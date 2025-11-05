@@ -34,6 +34,9 @@ RUN --mount=type=cache,target=/root/.m2/repository \
 # ============================
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
+# Atualizar pacotes para corrigir CVEs
+RUN apk update && apk upgrade --no-cache
+
 WORKDIR /app
 
 # Instalar dependências necessárias

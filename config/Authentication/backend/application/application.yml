@@ -13,6 +13,13 @@ keycloak:
   realm: car-dpg
   client-id: api-service
   client-secret: YvM5Ymcx5zjcaWAhK4ER2eJw7nI7H50P
+  redirect-uri: ${HTTP_HTTPS}://${HOSTNAME_DNS}${BASE_URL}
 
 backend:
   base-url: http://${CORE_BACKEND_API_SERVICE_NAME}:8080${CORE_BACKEND_API_BASE_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

@@ -2,6 +2,10 @@
 # 1) Dependencies Stage
 # ============================
 FROM node:18-alpine AS dependencies
+
+# Atualizar pacotes para corrigir CVEs
+RUN apk update && apk upgrade --no-cache
+
 WORKDIR /app
 
 # Instalar pnpm globalmente
@@ -27,6 +31,9 @@ RUN pnpm run build
 # 3) Runtime Stage
 # ============================
 FROM nginx:alpine AS final
+
+# Atualizar pacotes para corrigir CVEs
+RUN apk update && apk upgrade --no-cache
 
 # Copiar arquivos buildados
 COPY --from=build /app/dist /usr/share/nginx/html${BASE_URL}${AUTHENTICATION_FRONTEND_KEYCLOAK_BASE_URL}

@@ -1,4 +1,8 @@
 FROM nginx:alpine
+
+# Atualizar pacotes para corrigir CVEs
+RUN apk update && apk upgrade --no-cache
+
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Criar diretórios de cache e ajustar permissões

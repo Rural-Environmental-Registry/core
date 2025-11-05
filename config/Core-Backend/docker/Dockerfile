@@ -35,8 +35,8 @@ RUN --mount=type=cache,target=/root/.gradle/caches \
 FROM eclipse-temurin:21-jre-jammy AS runtime
 WORKDIR /app
 
-# Instalar dependências do sistema
-RUN apt-get update && apt-get install -y \
+# Atualizar sistema e instalar dependências
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     libfreetype6 \
     fontconfig \
     && rm -rf /var/lib/apt/lists/* \

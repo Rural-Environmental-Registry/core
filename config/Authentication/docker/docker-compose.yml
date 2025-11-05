@@ -12,8 +12,8 @@ services:
     - authentication_network
 
   ${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME}:
+    image: rer-authentication:latest
     build: . # usa o Dockerfile na raiz do projeto (keycloak)
-    # image: keycloak-car-dpg:custom
     container_name: ${AUTHENTICATION_BASE_KEYCLOAK_CONTAINER_NAME}
     environment:
       KC_DB: postgres
@@ -52,6 +52,7 @@ services:
       - authentication_network
 
   ${AUTHENTICATION_FRONTEND_KEYCLOAK_SERVICE_NAME}:
+    image: rer-authentication-frontend:latest
     build: ./frontend
     container_name: ${AUTHENTICATION_FRONTEND_KEYCLOAK_CONTAINER_NAME}
     depends_on:
@@ -62,6 +63,7 @@ services:
     - gateway_network
 
   ${AUTHENTICATION_BACKEND_KEYCLOAK_SERVICE_NAME}:
+    image: rer-authentication-backend:latest
     build: ./cardpg
     container_name: ${AUTHENTICATION_BACKEND_KEYCLOAK_CONTAINER_NAME}
     depends_on:

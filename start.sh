@@ -81,6 +81,8 @@ envsubst < $GATEWAY_CONFIG_PATH/application/application.yml > $GATEWAY_PATH/src/
 #Prepare Geoserver directory
 mkdir -p $GEOSERVER_PATH
 envsubst < $GEOSERVER_CONFIG_PATH/docker/docker-compose.yml | envsubst | envsubst > $GEOSERVER_PATH/docker-compose.yml
+cp $GEOSERVER_CONFIG_PATH/docker/Dockerfile $GEOSERVER_PATH/Dockerfile
+cp $GEOSERVER_CONFIG_PATH/docker/populate_geoserver.sh $GEOSERVER_PATH/populate_geoserver.sh
 
 # Proxy configuration
 if [ -z "$PROXY_HOST" ] || [ -z "$PROXY_PORT" ]; then

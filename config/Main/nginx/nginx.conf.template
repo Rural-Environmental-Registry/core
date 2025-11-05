@@ -28,7 +28,6 @@ http {
   # Otimizações para proxy
   proxy_http_version      1.1;
   proxy_cache_bypass      ${DOLLAR}http_upgrade;
-  proxy_redirect          off;
   
   # Timeouts
   proxy_connect_timeout   75s;
@@ -50,7 +49,7 @@ http {
     }
 
     location ^~ ${BASE_URL}${GEOSERVER_BASE_URL}/ {
-      proxy_pass http://geoserver:8080;
+      proxy_pass http://${GEOSERVER_SERVICE_NAME}:8080;
       proxy_set_header Host ${DOLLAR}host;
       proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
       proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
@@ -68,10 +67,6 @@ http {
       proxy_set_header X-Forwarded-Proto ${HTTP_HTTPS};
       proxy_set_header X-Forwarded-Host ${DOLLAR}host;
       proxy_set_header X-Forwarded-Prefix ${BASE_URL};
-    }
-
-    location / {
-      return 301 ${BASE_URL};
     }
 
     error_page   500 502 503 504  /50x.html;
