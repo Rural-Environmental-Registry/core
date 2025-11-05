@@ -1,6 +1,10 @@
 # Rural Environmental Registry Privacy Policy
 October 24, 2025
 
+## Privacy and Applicable Laws
+
+This system complies with the **Brazilian General Data Protection Law (LGPD) - Law No. 13.709/2018** and follows its principles for the collection, processing, storage, and protection of personal data.
+
 ## What do we mean by "personal information?"
 For us, "personal information" means information which either directly identifies you (like your name, email address, or billing information) or can be reasonably linked or combined to identify you (like an account identification number or IP address). We’ll always tell you what personal information we’re collecting from you. See each product’s Privacy Notice for specific details.
 
