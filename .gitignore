@@ -62,3 +62,8 @@ package-lock.json
 *.bak
 *.swp
 *~
+
+# AI assistants
+.kiro/
+.amazonq/
+.continue/
