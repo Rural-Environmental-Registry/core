@@ -3,9 +3,9 @@ name: Build and Push GeoServer Docker Image
 on:
   push:
     branches:
-      - develop
-      - staging
-      - demo
+      - 'release/dev'
+      - 'release/qa'
+      - 'release/prd'
       - main
     paths:
       - 'config/Geoserver/**'
@@ -30,13 +30,13 @@ jobs:
         id: set-tag
         run: |
           case "${{ github.ref_name }}" in
-            develop)
+            release/dev)
               echo "tag=dev" >> $GITHUB_OUTPUT
               ;;
-            staging)
+            release/qa)
               echo "tag=qa" >> $GITHUB_OUTPUT
               ;;
-            demo)
+            release/prd)
               echo "tag=prd" >> $GITHUB_OUTPUT
               ;;
             main)
