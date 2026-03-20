@@ -1,0 +1,343 @@
+# =============================================================================
+# RER - Rural Environmental Registry (Digital Public Good)
+# Docker Compose - Standalone Deployment
+# =============================================================================
+# Este arquivo usa imagens pré-buildadas do ghcr.io.
+# Não requer clone de submódulos nem build local.
+#
+# Uso:
+#   docker compose up -d
+#
+# Pré-requisitos:
+#   - Docker 24+ com Docker Compose v2
+#   - Copiar .env.example para .env e ajustar conforme necessário
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # NGINX Reverse Proxy
+  # ---------------------------------------------------------------------------
+  main-proxy:
+    image: nginx:alpine
+    container_name: rer-proxy
+    ports:
+      - "${RER_HTTP_PORT:-80}:80"
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - gateway_network
+    restart: always
+    depends_on:
+      - gateway
+
+  # ---------------------------------------------------------------------------
+  # API Gateway (Spring Cloud Gateway)
+  # ---------------------------------------------------------------------------
+  gateway:
+    image: ghcr.io/rural-environmental-registry/rer-gateway:latest
+    container_name: rer-gateway
+    networks:
+      - gateway_network
+    restart: always
+    depends_on:
+      - core-frontend
+      - core-backend
+      - authentication
+      - authentication-frontend
+      - authentication-backend
+      - geo-calculation-engine-app
+
+  # ---------------------------------------------------------------------------
+  # Core Frontend (Vue.js 3 + Nginx)
+  # ---------------------------------------------------------------------------
+  core-frontend:
+    image: ghcr.io/rural-environmental-registry/rer-core-frontend:latest
+    container_name: rer-core-frontend
+    restart: unless-stopped
+    networks:
+      - gateway_network
+
+  # ---------------------------------------------------------------------------
+  # Core Backend (Spring Boot + Flyway)
+  # ---------------------------------------------------------------------------
+  core-backend:
+    image: ghcr.io/rural-environmental-registry/rer-core-backend:latest
+    container_name: rer-core-backend
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://core-backend-db:5432/${CORE_BACKEND_DB_NAME}"
+      SPRING_DATASOURCE_USERNAME: "${CORE_BACKEND_DB_USER}"
+      SPRING_DATASOURCE_PASSWORD: "${CORE_BACKEND_DB_PASSWORD}"
+      FRONTEND_URLS: "${FRONTEND_URLS}"
+      HASH_PREFIX: "${CORE_BACKEND_API_HASH_PREFIX}"
+      RECEIPT_LOGO_PATH: "${CORE_BACKEND_API_RECEIPT_LOGO_PATH}"
+      WATERMARK_IMAGE_PATH: "${CORE_BACKEND_API_WATERMARK_IMAGE_PATH}"
+      GENERAL_INFORMATION_RECEIPT_PATH: "${CORE_BACKEND_API_GENERAL_INFORMATION_RECEIPT_PATH}"
+      REPORT_PARAMS_RECEIPT_JSON: "${CORE_BACKEND_API_REPORT_PARAMS_RECEIPT_JSON}"
+      DEFAULT_LOCATION_ZONE: "${CORE_BACKEND_API_DEFAULT_LOCATION_ZONE}"
+    depends_on:
+      core-backend-db:
+        condition: service_healthy
+    networks:
+      - core-backend-network
+      - gateway_network
+    restart: always
+
+  # ---------------------------------------------------------------------------
+  # Core Backend Database (PostgreSQL + PostGIS)
+  # Schema gerenciado automaticamente pelo Flyway (backend)
+  # ---------------------------------------------------------------------------
+  core-backend-db:
+    image: postgis/postgis:latest
+    container_name: rer-core-backend-db
+    environment:
+      POSTGRES_DB: "${CORE_BACKEND_DB_NAME}"
+      POSTGRES_USER: "${CORE_BACKEND_DB_USER}"
+      POSTGRES_PASSWORD: "${CORE_BACKEND_DB_PASSWORD}"
+    volumes:
+      - car-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CORE_BACKEND_DB_USER} -d ${CORE_BACKEND_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core-backend-network
+    restart: always
+
+  # ---------------------------------------------------------------------------
+  # Authentication - Keycloak (SSO / OAuth2)
+  # ---------------------------------------------------------------------------
+  authentication:
+    image: ghcr.io/rural-environmental-registry/rer-auth-keycloak:latest
+    container_name: rer-authentication
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: "jdbc:postgresql://authentication-db:5432/${AUTH_DB_NAME}"
+      KC_DB_URL_HOST: authentication-db
+      KC_DB_URL_PORT: 5432
+      KC_DB_URL_DATABASE: "${AUTH_DB_NAME}"
+      KC_DB_USERNAME: "${AUTH_DB_USER}"
+      KC_DB_PASSWORD: "${AUTH_DB_PASSWORD}"
+      KEYCLOAK_ADMIN: "${KEYCLOAK_ADMIN_USER}"
+      KEYCLOAK_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD}"
+      KC_SPI_THEME_CACHE_THEMES: "false"
+      KC_SPI_THEME_CACHE_TEMPLATES: "false"
+      KEYCLOAK_IMPORT: /opt/keycloak/data/import/realm-export.json
+      KC_HTTP_PORT: 8080
+      KC_HOSTNAME: "${HOSTNAME_DNS}"
+      KEYCLOAK_FRONTEND_URL: "${APP_URL}/keycloak"
+      KC_HOSTNAME_URL: "${APP_URL}/keycloak"
+      KC_HOSTNAME_PATH: "/keycloak"
+      KC_HOSTNAME_PORT: "443"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KEYCLOAK_PROFILE: preview
+      KC_FEATURES: "scripts"
+      KC_CORS: "true"
+      QUARKUS_HTTP_CORS_ENABLED: "true"
+      QUARKUS_HTTP_CORS_METHODS: "GET,PUT,POST,DELETE,OPTIONS"
+    command: start --import-realm --optimized
+    depends_on:
+      authentication-db:
+        condition: service_healthy
+    networks:
+      - gateway_network
+      - authentication_network
+    restart: always
+
+  # ---------------------------------------------------------------------------
+  # Authentication Frontend (Vue.js 3 + Nginx)
+  # ---------------------------------------------------------------------------
+  authentication-frontend:
+    image: ghcr.io/rural-environmental-registry/rer-auth-frontend:latest
+    container_name: rer-auth-frontend
+    depends_on:
+      - authentication-backend
+    networks:
+      - authentication_network
+      - gateway_network
+    restart: always
+
+  # ---------------------------------------------------------------------------
+  # Authentication Backend - CardPG (Spring Boot, porta 8081)
+  # Admin API para gerenciamento de usuários e permissões
+  # ---------------------------------------------------------------------------
+  authentication-backend:
+    image: ghcr.io/rural-environmental-registry/rer-auth-backend:latest
+    container_name: rer-auth-backend
+    depends_on:
+      authentication-db:
+        condition: service_healthy
+    networks:
+      - authentication_network
+      - gateway_network
+    restart: always
+
+  # ---------------------------------------------------------------------------
+  # Authentication Database (PostgreSQL)
+  # ---------------------------------------------------------------------------
+  authentication-db:
+    image: postgres:15
+    container_name: rer-authentication-db
+    environment:
+      POSTGRES_DB: "${AUTH_DB_NAME}"
+      POSTGRES_USER: "${AUTH_DB_USER}"
+      POSTGRES_PASSWORD: "${AUTH_DB_PASSWORD}"
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_DB_USER} -d ${AUTH_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - authentication_network
+    restart: always
+
+  # ---------------------------------------------------------------------------
+  # Calculation Engine (Spring Boot WebFlux + R2DBC)
+  # ---------------------------------------------------------------------------
+  geo-calculation-engine-app:
+    image: ghcr.io/rural-environmental-registry/rer-calc-engine:latest
+    container_name: rer-calc-engine
+    environment:
+      SPRING_R2DBC_URL: "r2dbc:postgresql://${CALC_ENGINE_DB_USER}:${CALC_ENGINE_DB_PASSWORD}@calculator-engine-db:5432/${CALC_ENGINE_DB_NAME}?currentSchema=engine_configuration"
+      SPRING_R2DBC_ADDITIONAL_DATASOURCES_CALC_URL: "r2dbc:postgresql://${CALC_POSTGIS_DB_USER}:${CALC_POSTGIS_DB_PASSWORD}@postgis-calculator-db:5432/${CALC_POSTGIS_DB_NAME}"
+    depends_on:
+      calculator-engine-db:
+        condition: service_healthy
+      postgis-calculator-db:
+        condition: service_healthy
+    networks:
+      - geo_calc_network
+      - gateway_network
+    restart: always
+
+  # ---------------------------------------------------------------------------
+  # Calculation Engine Database (PostgreSQL)
+  # SQL scripts baixados do GitHub na inicialização
+  # ---------------------------------------------------------------------------
+  calculator-engine-db:
+    image: postgres:17
+    container_name: rer-calculator-engine-db
+    environment:
+      POSTGRES_DB: "${CALC_ENGINE_DB_NAME}"
+      POSTGRES_USER: "${CALC_ENGINE_DB_USER}"
+      POSTGRES_PASSWORD: "${CALC_ENGINE_DB_PASSWORD}"
+    volumes:
+      - calculator-engine-data:/var/lib/postgresql/data
+      - ./data/db-init/calculator_engine:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CALC_ENGINE_DB_USER} -d ${CALC_ENGINE_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - geo_calc_network
+    restart: always
+
+  # ---------------------------------------------------------------------------
+  # PostGIS Calculator Database (PostgreSQL + PostGIS)
+  # Funções espaciais para cálculos ambientais
+  # ---------------------------------------------------------------------------
+  postgis-calculator-db:
+    image: postgis/postgis:17-3.5-alpine
+    container_name: rer-postgis-calculator-db
+    environment:
+      POSTGRES_DB: "${CALC_POSTGIS_DB_NAME}"
+      POSTGRES_USER: "${CALC_POSTGIS_DB_USER}"
+      POSTGRES_PASSWORD: "${CALC_POSTGIS_DB_PASSWORD}"
+    volumes:
+      - postgis-calculator-data:/var/lib/postgresql/data
+      - ./data/db-init/postgis_calculator:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CALC_POSTGIS_DB_USER} -d ${CALC_POSTGIS_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - geo_calc_network
+    restart: always
+
+  # ---------------------------------------------------------------------------
+  # GeoServer (Servidor de mapas OGC)
+  # Imagem customizada com populate_geoserver.sh
+  # ---------------------------------------------------------------------------
+  geoserver:
+    build:
+      context: ./config/Geoserver/docker
+      dockerfile: Dockerfile
+    container_name: rer-geoserver
+    volumes:
+      - geoserver-data:/var/geoserver/datadir
+    environment:
+      GEOSERVER_DATA_DIR: /var/geoserver/datadir
+      GEOSERVER_ADMIN_USER: "${GEOSERVER_ADMIN_USER}"
+      GEOSERVER_ADMIN_PASSWORD: "${GEOSERVER_ADMIN_PASSWORD}"
+      PROXY_BASE_URL: "${APP_URL}/geoserver"
+      WEBAPP_CONTEXT: "/geoserver"
+      GEOSERVER_CSRF_DISABLED: "true"
+      USE_CORS_ENABLED_STRUCTURE: "true"
+      CORS_ENABLED: "true"
+      CORS_ALLOWED_ORIGINS: "*"
+      CORS_ALLOWED_METHODS: "GET,POST,PUT,DELETE,HEAD,OPTIONS"
+      CORS_ALLOWED_HEADERS: "*"
+      WORKSPACE_NAME: "${GEOSERVER_WORKSPACE_NAME}"
+      DATASTORE_NAME: "${GEOSERVER_DATASTORE_NAME}"
+      DB_HOST: core-backend-db
+      DB_PORT: 5432
+      DB_NAME: "${CORE_BACKEND_DB_NAME}"
+      DB_SCHEMA: public
+      DB_USER: "${CORE_BACKEND_DB_USER}"
+      DB_PASSWORD: "${CORE_BACKEND_DB_PASSWORD}"
+    networks:
+      - gateway_network
+      - geo_calc_network
+      - core-backend-network
+    restart: always
+    depends_on:
+      core-backend-db:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # GeoServer Init (popula workspace, estilos, camadas)
+  # Executa uma vez após o GeoServer iniciar
+  # ---------------------------------------------------------------------------
+  geoserver-init:
+    image: docker:27-cli
+    container_name: rer-geoserver-init
+    depends_on:
+      - geoserver
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "echo 'Aguardando GeoServer iniciar...' &&
+      sleep 30 &&
+      docker exec rer-geoserver bash -c '/opt/populate_geoserver.sh' &&
+      echo 'GeoServer populado com sucesso!'"
+    restart: "no"
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  gateway_network:
+    driver: bridge
+  core-backend-network:
+    driver: bridge
+  authentication_network:
+    driver: bridge
+  geo_calc_network:
+    driver: bridge
+
+# =============================================================================
+# Volumes (dados persistentes)
+# =============================================================================
+volumes:
+  car-db-data:
+  auth-db-data:
+  calculator-engine-data:
+  postgis-calculator-data:
+  geoserver-data:
