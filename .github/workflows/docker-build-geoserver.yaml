@@ -26,21 +26,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Read version
+        id: version
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+
       - name: Set environment tag
         id: set-tag
         run: |
+          VERSION="${{ steps.version.outputs.version }}"
           case "${{ github.ref_name }}" in
             release/dev)
-              echo "tag=dev" >> $GITHUB_OUTPUT
+              echo "tag=${VERSION}-dev" >> $GITHUB_OUTPUT
               ;;
             release/qa)
-              echo "tag=qa" >> $GITHUB_OUTPUT
+              echo "tag=${VERSION}-qa" >> $GITHUB_OUTPUT
               ;;
             release/prd)
-              echo "tag=prd" >> $GITHUB_OUTPUT
+              echo "tag=${VERSION}" >> $GITHUB_OUTPUT
               ;;
             main)
-              echo "tag=latest" >> $GITHUB_OUTPUT
+              echo "tag=${VERSION}" >> $GITHUB_OUTPUT
+              echo "latest=true" >> $GITHUB_OUTPUT
               ;;
             *)
               echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
@@ -62,7 +68,9 @@ jobs:
         with:
           context: ./config/Geoserver
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.tag }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.tag }}
+            ${{ steps.set-tag.outputs.latest == 'true' && format('{0}/{1}/{2}:latest', env.REGISTRY, github.repository_owner, env.IMAGE_NAME) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -72,4 +80,3 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Image:** \`${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
-# Trigger: 2026-03-18
