@@ -10,6 +10,7 @@ on:
     paths:
       - 'config/Geoserver/**'
       - '.github/workflows/docker-build-geoserver.yaml'
+      - 'VERSION'
 
 env:
   REGISTRY: ghcr.io
@@ -66,7 +67,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./config/Geoserver
+          context: ./config/Geoserver/docker
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.tag }}
