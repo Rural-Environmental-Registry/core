@@ -78,6 +78,7 @@ jobs:
             ${{ steps.set-tag.outputs.latest == 'true' && format('{0}/{1}/{2}:latest', env.REGISTRY, steps.owner.outputs.owner, env.IMAGE_NAME) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
 
       - name: Image summary
         run: |
