@@ -35,7 +35,7 @@ services:
   # API Gateway (Spring Cloud Gateway)
   # ---------------------------------------------------------------------------
   gateway:
-    image: ghcr.io/rural-environmental-registry/rer-gateway:latest
+    image: ghcr.io/rural-environmental-registry/rer-gateway:${RER_VERSION:-1.0.0}
     container_name: rer-gateway
     networks:
       - gateway_network
@@ -52,7 +52,7 @@ services:
   # Core Frontend (Vue.js 3 + Nginx)
   # ---------------------------------------------------------------------------
   core-frontend:
-    image: ghcr.io/rural-environmental-registry/rer-core-frontend:latest
+    image: ghcr.io/rural-environmental-registry/rer-core-frontend:${RER_VERSION:-1.0.0}
     container_name: rer-core-frontend
     restart: unless-stopped
     networks:
@@ -62,7 +62,7 @@ services:
   # Core Backend (Spring Boot + Flyway)
   # ---------------------------------------------------------------------------
   core-backend:
-    image: ghcr.io/rural-environmental-registry/rer-core-backend:latest
+    image: ghcr.io/rural-environmental-registry/rer-core-backend:${RER_VERSION:-1.0.0}
     container_name: rer-core-backend
     environment:
       SPRING_DATASOURCE_URL: "jdbc:postgresql://core-backend-db:5432/${CORE_BACKEND_DB_NAME}"
@@ -109,7 +109,7 @@ services:
   # Authentication - Keycloak (SSO / OAuth2)
   # ---------------------------------------------------------------------------
   authentication:
-    image: ghcr.io/rural-environmental-registry/rer-auth-keycloak:latest
+    image: ghcr.io/rural-environmental-registry/rer-auth-keycloak:${RER_VERSION:-1.0.0}
     container_name: rer-authentication
     environment:
       KC_DB: postgres
@@ -150,7 +150,7 @@ services:
   # Authentication Frontend (Vue.js 3 + Nginx)
   # ---------------------------------------------------------------------------
   authentication-frontend:
-    image: ghcr.io/rural-environmental-registry/rer-auth-frontend:latest
+    image: ghcr.io/rural-environmental-registry/rer-auth-frontend:${RER_VERSION:-1.0.0}
     container_name: rer-auth-frontend
     depends_on:
       - authentication-backend
@@ -164,7 +164,7 @@ services:
   # Admin API para gerenciamento de usuários e permissões
   # ---------------------------------------------------------------------------
   authentication-backend:
-    image: ghcr.io/rural-environmental-registry/rer-auth-backend:latest
+    image: ghcr.io/rural-environmental-registry/rer-auth-backend:${RER_VERSION:-1.0.0}
     container_name: rer-auth-backend
     depends_on:
       authentication-db:
@@ -199,7 +199,7 @@ services:
   # Calculation Engine (Spring Boot WebFlux + R2DBC)
   # ---------------------------------------------------------------------------
   geo-calculation-engine-app:
-    image: ghcr.io/rural-environmental-registry/rer-calc-engine:latest
+    image: ghcr.io/rural-environmental-registry/rer-calc-engine:${RER_VERSION:-1.0.0}
     container_name: rer-calc-engine
     environment:
       SPRING_R2DBC_URL: "r2dbc:postgresql://${CALC_ENGINE_DB_USER}:${CALC_ENGINE_DB_PASSWORD}@calculator-engine-db:5432/${CALC_ENGINE_DB_NAME}?currentSchema=engine_configuration"
