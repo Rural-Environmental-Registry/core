@@ -1,23 +1,23 @@
 [submodule "authentication"]
 	path = authentication
-	url = https://github.com/Rural-Environmental-Registry/authentication.git
+	url = https://github.com/guilhermeaalves317/authentication.git
 	branch = main
 [submodule "backend"]
 	path = backend
-	url = https://github.com/Rural-Environmental-Registry/backend.git
+	url = https://github.com/guilhermeaalves317/backend.git
 	branch = main
 [submodule "calc_engine"]
 	path = calc_engine
-	url = https://github.com/Rural-Environmental-Registry/calc_engine.git
+	url = https://github.com/guilhermeaalves317/calc_engine.git
 [submodule "frontend"]
 	path = frontend
-	url = https://github.com/Rural-Environmental-Registry/frontend.git
+	url = https://github.com/guilhermeaalves317/frontend.git
 	branch = main
 [submodule "gateway"]
 	path = gateway
-	url = https://github.com/Rural-Environmental-Registry/gateway.git
+	url = https://github.com/guilhermeaalves317/gateway.git
 	branch = main
 [submodule "map_component"]
 	path = map_component
-	url = https://github.com/Rural-Environmental-Registry/map_component.git
+	url = https://github.com/guilhermeaalves317/map_component.git
 	branch = main
