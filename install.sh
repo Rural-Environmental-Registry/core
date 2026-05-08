@@ -15,7 +15,7 @@ info() { echo -e "${GREEN}[RER]${NC} $1"; }
 warn() { echo -e "${YELLOW}[RER]${NC} $1"; }
 error() { echo -e "${RED}[RER]${NC} $1"; exit 1; }
 
-RER_VERSION="${RER_VERSION:-1.0.0-dev}"
+RER_VERSION="${RER_VERSION:-1.0.0}"
 RER_DIR="${RER_DIR:-$HOME/rer}"
 RER_PORT="${RER_PORT:-8080}"
 
@@ -28,6 +28,10 @@ fi
 
 if ! docker compose version &>/dev/null; then
   error "Docker Compose v2 not found. Install: https://docs.docker.com/compose/install/"
+fi
+
+if ! command -v openssl &>/dev/null; then
+  error "openssl not found. Install: apt-get install openssl"
 fi
 
 DOCKER_VERSION=$(docker version --format '{{.Server.Version}}' 2>/dev/null || echo "0")
@@ -78,10 +82,12 @@ else
 fi
 
 # --- 4. Generate docker-compose.yml ---
+if [ -f docker-compose.yml ]; then
+  cp docker-compose.yml docker-compose.yml.bak
+  info "Backed up existing docker-compose.yml → docker-compose.yml.bak"
+fi
 info "Generating docker-compose.yml..."
 cat > docker-compose.yml << 'COMPOSE'
-version: "3.8"
-
 services:
   # --- Databases ---
   core-db:
@@ -235,6 +241,9 @@ networks:
 COMPOSE
 
 # --- 5. Generate nginx.conf ---
+if [ -f nginx.conf ]; then
+  cp nginx.conf nginx.conf.bak
+fi
 cat > nginx.conf << 'NGINX'
 worker_processes auto;
 pid /tmp/nginx.pid;
@@ -295,8 +304,8 @@ docker compose up -d
 info "Waiting for services to start..."
 sleep 10
 
-HEALTHY=$(docker compose ps --format json 2>/dev/null | grep -c '"running"' || docker compose ps | grep -c "Up" || echo "0")
-TOTAL=$(docker compose ps --format json 2>/dev/null | wc -l || docker compose ps | tail -n +2 | wc -l || echo "0")
+HEALTHY=$(docker compose ps --filter "status=running" --quiet 2>/dev/null | wc -l || echo "0")
+TOTAL=$(docker compose ps --quiet 2>/dev/null | wc -l || echo "0")
 
 echo ""
 info "============================================"
