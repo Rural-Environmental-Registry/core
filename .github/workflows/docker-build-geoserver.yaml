@@ -1,0 +1,88 @@
+name: Build and Push GeoServer Docker Image
+
+on:
+  push:
+    branches:
+      - 'release/dev'
+      - 'release/qa'
+      - 'release/prd'
+      - main
+    paths:
+      - 'config/Geoserver/**'
+      - '.github/workflows/docker-build-geoserver.yaml'
+      - 'VERSION'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: rer-geoserver
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set lowercase owner
+        id: owner
+        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Read version
+        id: version
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+
+      - name: Set environment tag
+        id: set-tag
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          case "${{ github.ref_name }}" in
+            release/dev)
+              echo "tag=${VERSION}-dev" >> $GITHUB_OUTPUT
+              ;;
+            release/qa)
+              echo "tag=${VERSION}-qa" >> $GITHUB_OUTPUT
+              ;;
+            release/prd)
+              echo "tag=${VERSION}" >> $GITHUB_OUTPUT
+              ;;
+            main)
+              echo "tag=${VERSION}" >> $GITHUB_OUTPUT
+              echo "latest=true" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./config/Geoserver/docker
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.owner.outputs.owner }}/${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.tag }}
+            ${{ steps.set-tag.outputs.latest == 'true' && format('{0}/{1}/{2}:latest', env.REGISTRY, steps.owner.outputs.owner, env.IMAGE_NAME) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+      - name: Image summary
+        run: |
+          echo "### Docker Image Published :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ env.REGISTRY }}/${{ steps.owner.outputs.owner }}/${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY

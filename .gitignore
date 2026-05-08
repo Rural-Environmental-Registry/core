@@ -64,6 +64,6 @@ package-lock.json
 *~
 
 # AI assistants
-.kiro/
+.kiro
 .amazonq/
 .continue/
