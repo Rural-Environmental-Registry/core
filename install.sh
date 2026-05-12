@@ -157,6 +157,7 @@ services:
       SPRING_DATASOURCE_URL: ${CORE_DB_URL}
       SPRING_DATASOURCE_USERNAME: ${CORE_DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${CORE_DB_PASSWORD}
+      FRONTEND_URLS: http://localhost:${RER_PORT:-8080}
     depends_on:
       core-db: { condition: service_healthy }
     networks: [rer-net]
@@ -266,28 +267,35 @@ http {
         }
 
         location /api/ {
-            proxy_pass http://gateway:8080;
+            proxy_pass http://gateway:8080/;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
         }
 
         location /keycloak/ {
-            proxy_pass http://auth-keycloak:8080;
+            proxy_pass http://auth-keycloak:8080/;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host $host;
         }
 
         location /auth/ {
-            proxy_pass http://auth-frontend:8080;
+            proxy_pass http://auth-frontend:8080/;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
         }
 
         location /geoserver/ {
-            proxy_pass http://geoserver:8080;
+            proxy_pass http://geoserver:8080/geoserver/;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location /health {
+            access_log off;
+            return 200 'ok';
+            add_header Content-Type text/plain;
         }
     }
 }
