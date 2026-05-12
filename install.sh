@@ -158,6 +158,11 @@ services:
       SPRING_DATASOURCE_USERNAME: ${CORE_DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${CORE_DB_PASSWORD}
       FRONTEND_URLS: http://localhost:${RER_PORT:-8080}
+      HASH_PREFIX: RER
+      CARDPG_ENGINE_BASE_URL: http://calc-engine:8080
+      CARDPG_ENGINE_TIMEOUT_CONNECT_MS: "5000"
+      CARDPG_ENGINE_TIMEOUT_READ_MS: "30000"
+      CARDPG_ENGINE_WORKFLOW: default
     depends_on:
       core-db: { condition: service_healthy }
     networks: [rer-net]
