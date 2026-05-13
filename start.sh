@@ -32,8 +32,7 @@ envsubst < $CORE_FRONTEND_CONFIG_PATH/environment/.env | envsubst | envsubst | e
 envsubst < $CORE_FRONTEND_CONFIG_PATH/docker/Dockerfile | envsubst | envsubst > $CORE_FRONTEND_PATH/Dockerfile
 envsubst  < $CORE_FRONTEND_CONFIG_PATH/docker/docker-compose.yaml | envsubst | envsubst > $CORE_FRONTEND_PATH/docker-compose.yaml
 envsubst  < $CORE_FRONTEND_CONFIG_PATH/nginx/nginx.conf.template > $CORE_FRONTEND_PATH/nginx.conf
-cp -r $CORE_FRONTEND_CONFIG_PATH/script/map-dependency.cjs $CORE_FRONTEND_PATH/scripts/map-dependency.cjs
-cp -r ./Map-Component $CORE_FRONTEND_PATH
+cp -r ./map_component $CORE_FRONTEND_PATH
 
 # Prepare Core_Backend directory
 envsubst < $CORE_BACKEND_CONFIG_PATH/environment/.env.example | envsubst | envsubst | envsubst > $CORE_BACKEND_PATH/.env

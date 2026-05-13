@@ -2,16 +2,17 @@
   <img src="images/logo-rer-color.png" alt="RER Logo" width="300">
 </p>
 
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.3-brightgreen.svg)](https://spring.io/projects/spring-boot) [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-PostGIS-blue.svg)](https://postgis.net/) [![R2DBC](https://img.shields.io/badge/R2DBC-Reactive-purple.svg)](https://r2dbc.io/) [![Vue.js](https://img.shields.io/badge/Vue.js-3-green.svg)](https://vuejs.org/) [![Docker](https://img.shields.io/badge/Docker-24+-blue.svg)](https://www.docker.com/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.3-brightgreen.svg)](https://spring.io/projects/spring-boot) [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-PostGIS-blue.svg)](https://postgis.net/) [![Vue.js](https://img.shields.io/badge/Vue.js-3-green.svg)](https://vuejs.org/) [![Docker](https://img.shields.io/badge/Docker-24+-blue.svg)](https://www.docker.com/) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ## 📑 Table of Contents
 
-- [Welcome to RER](#welcome-to-RER)
-- [About the Project](#about-the-project)
-- [Project Organization](#project-organization)
-- [System Configuration Overview](#system-configuration-overview)
-- [Installation](#installation)
-- [System Architecture](#system-architecture)
+- [Welcome to RER](#welcome-to-rer)
+- [Quick Start](#quick-start)
+- [Manual Installation](#manual-installation)
+- [Project Architecture](#project-architecture)
+- [Repositories](#repositories)
+- [Accessing the Services](#accessing-the-services)
+- [Configuration](#configuration)
 - [Monitoring and Logs](#monitoring-and-logs)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
@@ -22,382 +23,380 @@
 
 ## Welcome to RER!
 
-The **RER** (Rural Environmental Registry — Digital Public Good) is a modern, comprehensive solution for managing rural environmental registrations, developed as a digital public good. This project provides a robust and scalable architecture for systems that register rural land properties with support for geospatial data.
+The **RER** (Rural Environmental Registry — Digital Public Good) is a modern, comprehensive solution for managing rural environmental registrations. Built as a digital public good, it provides a robust and scalable platform for registering rural land properties with full geospatial support.
 
-The solution is a technological platform that modernizes and expands the capabilities of the Rural Environmental Registry (CAR) by transforming it into a Digital Public Good (DPG). This approach aims to meet Brazil's specific needs while enabling replication in international contexts, promoting the interoperability and flexibility required for adapting to different legal frameworks, cultural requirements, and local realities.
-
-Based on open-source technologies, the solution will be modular, scalable, and interoperable, and will include:
-
-- An administrative portal for configuration and management
-- A portal for registration of properties and landowners
-- Robust geospatial tools
-
-The system is designed to provide a range of innovative features, particularly a highly efficient geospatial engine that enables real-time processing and analysis of spatial data. This engine facilitates visualization and decision-making in multiple areas, such as urban planning and environmental monitoring. It serves as the core module of the CAR DPG and will be implemented as an evolution of the geospatial engine currently used by SICAR.
-
-The solution will support multiple languages, ensuring global accessibility and adaptability to local user needs, regardless of region. Additionally, the system will be structured using microservices, ensuring greater flexibility, scalability, and ease of maintenance, allowing each component to operate independently and be updated or replaced without impacting the overall system.
-
-The use of building blocks — a standard concept in DPGs — allows for the creation of customized solutions and integration with other platforms, providing a modular and reusable approach. This also enables components to be replaced with other technologies better suited to each country’s reality. Finally, the DPG philosophy requires the system to be made available as open-source software, ensuring full transparency regarding implementation and allowing users and developers to collaborate, customize, and continuously improve its functionalities. This approach supports ongoing innovation and integration with the global developer community, which will be fostered and encouraged by the Brazilian government.
-
----
-
-## About the Project
-
-The RER is an integrated platform that combines modern technologies to provide a complete rural environmental registration system. It follows modular/microservices architecture principles and uses Docker containers to simplify deployment and maintenance.
+The solution modernizes and expands the capabilities of the Rural Environmental Registry (CAR) by transforming it into a Digital Public Good (DPG), meeting Brazil's specific needs while enabling replication in international contexts.
 
 **Key features:**
 
-• 🗺️ Support for geospatial data with PostGIS
-• 🧩 Reusable map library using Leaflet and drawing tools
-• 🔐 Robust authentication system with Keycloak
-• 🌐 Modern web interface built with Vue.js 3
-• ⚡ High-performance REST API with Spring Boot
-• 🚪 API Gateway for intelligent routing
-• 🧮 Calculation engine for data processing
-• 🐳 Full containerization with Docker
-
-Learn more about the system by accessing our [demo environment](https://rer.dataprev.gov.br).
+- 🗺️ Geospatial data support with PostGIS and GeoServer
+- 🧩 Interactive map component with Leaflet
+- 🔐 Authentication and authorization with Keycloak
+- 🌐 Modern web interface built with Vue.js 3
+- ⚡ High-performance REST API with Spring Boot
+- 🚪 API Gateway for intelligent routing
+- 🧮 Calculation engine for environmental data processing
+- 🐳 Full containerization with Docker
 
 ---
 
-## Project Organization
+## Quick Start
 
-RER is organized as a main project with multiple Git submodules, each responsible for a specific system functionality:
+Install RER on a clean Linux server with a single command:
 
-### Subprojects Structure
-
-- [**`backend/`**](https://github.com/Rural-Environmental-Registry/backend) - Main backend built with Spring Boot and PostGIS support for managing property, person, and related attribute records. It provides a complete REST API with Swagger documentation.
-
-- [**`frontend/`**](https://github.com/Rural-Environmental-Registry/frontend) - Modern web interface developed in Vue.js 3 with Vite, offering a responsive and intuitive user experience for rural environmental data registration and visualization.
-
-- [**`map_component/`**](https://github.com/Rural-Environmental-Registry/map_component) - Interactive map library for Vue 3, based on Leaflet, providing the dpg-mapa component with support for multiple layers, drawing tools, and event handling.
-
-- [**`authentication/`**](https://github.com/Rural-Environmental-Registry/authentication) - Authentication and authorization system based on Keycloak with PostgreSQL, including an administrative frontend and backend for user and permission management.
-
-- [**`calc_engine/`**](https://github.com/Rural-Environmental-Registry/calc_engine) - Calculation engine for geospatial data processing and environmental analysis, developed in Java with support for complex geoprocessing operations.
-
-- [**`Gateway/`**](https://github.com/Rural-Environmental-Registry/gateway) - API Gateway based on Spring Cloud Gateway for intelligent routing between different microservices, including load balancing and proxy configuration.
-
----
-
-## System Configuration Overview
-
-RER offers a centralized functionality for viewing all configurations applied to the different submodules of the project. This provides great transparency and facilitates debugging, allowing administrators and developers to quickly verify the values ​​of environment variables, compilation settings, and parameters defined in various files.
-
-### Page Access
-
-The view page can be accessed in the **`Authentication`** submodule interface.
-
-1. **Access the URL:** The `Authentication` administration application is available at `http://localhost/<BASE_URL>/<AUTHENTICATION_FRONTEND_CONTEXT_PATH>`.
-
-> The variables `<BASE_URL>` and `<AUTHENTICATION_FRONTEND_CONTEXT_PATH>` are defined in the environment's [configurations](config/Main/environment/.env.example).
-
-2. **Log in** with the following default administrator credentials:
-
-- **Username:** `admin-cardpg@gmail.com`
-
-- **Password:** `NewStrongPassword123!`
-
-After logging in, the settings table will be displayed.
-
-### How it Works
-
-The functionality is orchestrated by several key components:
-
-1. **Display Interface (`Authentication/frontend/src/views/AdminSettings.vue`)**: A page in the `Authentication` frontend that retrieves and displays the settings in a searchable table.
-
-2. **Frontend Data Collection (`frontend/scripts/generate-config.sh`)**: This script runs during the `frontend` build process and collects information from files such as `.env`, `package.json`, and map configurations, consolidating them into a `config.json` file that is served statically.
-
-3. **Backend Endpoint (`backend/src/main/java/br/car/registration/controller/AdminController.java`)**: Exposes an endpoint (`/v1/admin/app-info`) that provides server-side configurations, such as application properties (`application.properties`), environment variables, and default system attributes.
-4. **Configuration Parser (`Authentication/frontend/src/helpers/table.ts`)**: A helper in the `Authentication` frontend that interprets data received from frontend and backend endpoints, identifying the source of each configuration for display in the interface.
-
-### How to Modify Configurations
-
-Changes should be made directly to the source files of each submodule. The table on the administration page indicates the "component" (submodule) and the "source" (file or mechanism) of each configuration.
-
-Below are some practical examples:
-
-| Configuration | Source | Submodule | How to Change |
-| :---------------------- | :-------------------------- | :-------------- | :---------------------------------------------------------------------------------------------------------- |
-| `frontend_project_name` | `package.json` | `frontend` | Change the `name` field in the `frontend/package.json` file. |
-| `backend_url` | `.env` | `frontend` | Modify the `VITE_CARDPG_URL` variable in the `frontend/.env` file. |
-| `default_language` | `src/config/languages.json` | `frontend` | Adjust the `defaultlanguage` key in the `frontend/src/config/languages.json` file. |
-| `application_name` | `application.properties` | `backend` | Change the `spring.application.name` property in `backend/src/main/resources/application.properties`. |
-| `frontend_urls` | `docker-compose.yaml` | `backend` | Define the `FRONTEND_URLS` environment variable in the corresponding service. |
-| `fields.person` | `database` (hardcoded) | `backend` | Modify the `getDefaultAttributes()` method in `AdminController.java`. |
-
-This approach ensures that each submodule remains self-contained in its settings, while providing a unified view for system administration.
-
----
-
-## Installation
-
-### Prerequisites
-
-Before getting started, make sure you have installed:
-
-- **Docker** version 24+ ([installation](https://docs.docker.com/engine/install/))
-- **Docker Compose** version 2.20 or higher ([installation](https://docs.docker.com/compose/install/linux/#install-using-the-repository))
-- **gettext** (for environment variable substitution):
-  ```bash
-  sudo apt install gettext-base
-  ```
-- **Git** ([installation](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git))
-- Operating System: Linux (recommended)
-
-### Download the Project
-
-1. **Clone the project with submodules:**
-
-   ```bash
-   git clone --recurse-submodules https://github.com/Rural-Environmental-Registry/core.git rer
-   ```
-
-2. **Enter the Project directory:**
-   ```bash
-   cd rer
-   ```
-
-### Configuration
-
-1. **Add your user to the Docker group:**
-
-   ```bash
-   sudo usermod -aG docker $USER
-   newgrp docker
-   ```
-
-2. **Review the configurations:**
-
-   - Check and adjust the environment variables in:
-     `./config/Main/environment/.env.example`
-   - Review the documentation of each submodule for specific configurations, if needed.
-
-3. **Grant execution permission to the startup script:**
-
-   ```bash
-   chmod +x ./start.sh
-   ```
-
-   > Edit `start.sh` only if necessary.
-
-### Running with Docker
-
-1. **Run the startup script:**
-
-   ```bash
-   ./start.sh
-   ```
-
-   This script will:
-
-   - Prepare all environment variables
-   - Configure the files for each submodule
-   - Build and run all Docker containers
-   - Automatically start all services
-
-2. **Check the service status:**
-   ```bash
-   docker compose ps
-   ```
-
-### Accessing the Services
-
-After successful execution, the following services will be available (based on the environment variables defined in the [configurations](config/Main/environment/.env.example)):
-
-- **Main Frontend:** http://localhost/<BASE_URL>
-- **Backend API:** http://localhost/<BASE_URL>/<CORE_BACKEND_API_CONTEXT_PATH>
-- **backend Swagger Documentation:** http://localhost/<BASE_URL>/<CORE_BACKEND_API_CONTEXT_PATH>/swagger-ui/index.html
-- **API Documentation:** [backend/API_DOCUMENTATION.md](backend/API_DOCUMENTATION.md)
-- **Keycloak Admin:** http://localhost/<BASE_URL>/<AUTHENTICATION_BASE_KEYCLOAK_BASE_URL>/admin
-- **Administrative Frontend:** http://localhost/<BASE_URL>/<AUTHENTICATION_FRONTEND_CONTEXT_PATH>/admin-login
-
-### Default Credentials
-
-- **System Administrator:**
-
-  - **Username:** `admin-cardpg@gmail.com`
-  - **Password:** `NovaSenhaForte123!`
-
-- **Keycloak Admin:**
-  - **Username:** `admin`
-  - **Password:** `admin`
-
----
-
-## System Architecture
-
-### Overview
-
-```
-                                       ┌───────────────────────────┐
-                                       │           NGINX           │
-                                       │          (Proxy)          │
-                                       └─────────────┬─────────────┘
-                                                     │
-                                       ┌─────────────▼─────────────┐
-                                       │         Gateway           │
-                                       │   (Spring Cloud Gateway)  │
-                                       └─────────────┬─────────────┘
-                                                     │
-        ┌────────────────────────────────────────────┼───────────────────────────────────┐
-        │                                            │                                   │
-        │                                            │                                   │
-┌───────▼───────────┐                    ┌───────────▼─────────┐              ┌──────────▼───────────┐
-│       Core        │                    │    Autentication    │              │   Calculation Engine │
-│ (Portal Cadastr.) │                    │                     │              │                      │
-└───────┬───────────┘                    └──────────┬──────────┘              └──────────┬───────────┘
-        │                                           │                                    │
-        │                           ┌───────────────┼──────────────┐                     │
- ┌──────▼────────┐          ┌───────▼───────┐              ┌───────▼────────┐   ┌────────▼────────┐
- │ frontend │          │ Auth-Frontend │              │ Admin-Frontend │   │   Backend       │
- │ (Vue.js + TS) │───┐      │ (Vue.js + TS) │              │ (Vue.js + TS)  │   │ (Spring Boot)   │
- └──────┬────────┘   │      └───────┬───────┘              └───────┬────────┘   └────────┬────────┘
-        │            │              └──────────────┬───────────────┘                     │
-        │    ┌───────▼───────┐                     │                                     │
-        │    │ Map Component │                     │                                     │
-        │    │   (Leaflet)   │                     │                                     │
-        │    └───────────────┘                     │                                     │
-        │                                          │                                     │
- ┌──────▼──────────┐                       ┌───────▼────────┐                  ┌─────────▼───────────┐
- │   Backend       │                       │   Keycloak     │                  │ Database      │
- │ (Spring Boot +  │                       │ (Auth Server)  │                  │ (PostgreSQL+PostGIS │
- │  JasperReports) │                       └───────┬────────┘                  │   Cálculos)         │
- └──────┬──────────┘                               │                           └─────────────────────┘
-        │                                          │
- ┌──────▼──────────┐                     ┌─────────▼───────────┐
- │ Database        │                     │ Database            │
- │ PostgreSQL +    │                     │ PostgreSQL (Keycloak│
- │ PostGIS (Core)  │                     │ DB)                 │
- └─────────────────┘                     └─────────────────────┘
+```bash
+curl -fsSL https://raw.githubusercontent.com/Rural-Environmental-Registry/core/main/install.sh | bash
 ```
 
-### Data Flow
+This will:
+1. Check and install Docker if needed
+2. Download all configuration files
+3. Pull all Docker images
+4. Start the complete stack
+5. Display access URLs and default credentials
 
-1. **User** → **frontend** (web interface)
-2. **frontend** → **gateway** (HTTP requests)
-3. **gateway** → **microservices** (intelligent routing)
-4. **authentication** ↔ **keycloak** (login/authorization)
-5. **backend** ↔ **PostgreSQL** (registration data)
-6. **calc_engine** → **calculations** (geoespacial processing)
+### Custom installation directory
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Rural-Environmental-Registry/core/main/install.sh | bash -s -- --dir /opt/rer
+```
+
+### Requirements
+
+- **OS:** Linux (Ubuntu 20.04+, Debian 11+, CentOS 8+, RHEL 8+)
+- **RAM:** 8GB minimum (16GB recommended)
+- **Disk:** 20GB free space
+- **CPU:** 4 cores minimum
+- **Network:** Internet access to download Docker images
+
+---
+
+## Manual Installation
+
+If you prefer to install manually:
+
+### 1. Install Docker
+
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+# Add your user to the docker group
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+### 2. Download configuration files
+
+```bash
+mkdir -p ~/rer && cd ~/rer
+
+# Download docker-compose and environment
+curl -fsSL https://raw.githubusercontent.com/Rural-Environmental-Registry/core/main/docker-compose.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/Rural-Environmental-Registry/core/main/.env.example -o .env
+
+# Download nginx config
+mkdir -p config/nginx
+curl -fsSL https://raw.githubusercontent.com/Rural-Environmental-Registry/core/main/config/nginx/nginx.conf -o config/nginx/nginx.conf
+
+# Download GeoServer config
+mkdir -p config/Geoserver/docker
+curl -fsSL https://raw.githubusercontent.com/Rural-Environmental-Registry/core/main/config/Geoserver/docker/Dockerfile -o config/Geoserver/docker/Dockerfile
+curl -fsSL https://raw.githubusercontent.com/Rural-Environmental-Registry/core/main/config/Geoserver/docker/populate_geoserver.sh -o config/Geoserver/docker/populate_geoserver.sh
+chmod +x config/Geoserver/docker/populate_geoserver.sh
+```
+
+### 3. Download database initialization scripts
+
+```bash
+# Calculation Engine DB (5 evolutions)
+mkdir -p data/db-init/calculator_engine
+for i in 0 1 2 3 4; do
+  curl -fsSL "https://raw.githubusercontent.com/Rural-Environmental-Registry/calc_engine/main/src/main/resources/db_structure/calculator_engine/evolution_${i}.sql" \
+    -o "data/db-init/calculator_engine/evolution_${i}.sql"
+done
+
+# PostGIS Calculator DB (3 evolutions)
+mkdir -p data/db-init/postgis_calculator
+for i in 0 1 2; do
+  curl -fsSL "https://raw.githubusercontent.com/Rural-Environmental-Registry/calc_engine/main/src/main/resources/db_structure/postgis_calculator/evolution_${i}.sql" \
+    -o "data/db-init/postgis_calculator/evolution_${i}.sql"
+done
+```
+
+### 4. Configure environment
+
+```bash
+# Copy the example and edit as needed
+cp .env.example .env
+
+# Edit the .env file — at minimum, change:
+#   - HOSTNAME_DNS (your server hostname or IP)
+#   - Database passwords (CORE_BACKEND_DB_PASSWORD, AUTH_DB_PASSWORD, etc.)
+#   - KEYCLOAK_ADMIN_PASSWORD
+nano .env
+```
+
+### 5. Start the stack
+
+```bash
+# Build the custom GeoServer image
+docker compose build geoserver
+
+# Start all services
+docker compose up -d
+```
+
+### 6. Verify
+
+```bash
+# Check all services are running
+docker compose ps
+
+# Watch logs
+docker compose logs -f
+```
+
+---
+
+## Project Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        NGINX Reverse Proxy (:80)                │
+│                    /geoserver → GeoServer                       │
+│                    /*         → Gateway                         │
+└──────────────┬──────────────────────────────┬───────────────────┘
+               │                              │
+    ┌──────────▼──────────┐       ┌───────────▼──────────┐
+    │   Spring Cloud      │       │     GeoServer        │
+    │   Gateway (:8080)   │       │     (:8080)          │
+    └──┬───┬───┬───┬──────┘       └──────────────────────┘
+       │   │   │   │
+  ┌────▼┐ ┌▼──┐│  ┌▼────────────────────┐
+  │Core ││Core││  │  Authentication      │
+  │Front││Back││  │  ┌────────┐┌───────┐ │
+  │end  ││end ││  │  │Keycloak││CardPG │ │
+  └─────┘└──┬─┘│  │  └───┬────┘└───┬───┘ │
+            │  │  │      │         │      │
+         ┌──▼──┐ │  ┌───▼─────────▼──┐   │
+         │Core │ │  │  Auth DB        │   │
+         │DB   │ │  │  (PostgreSQL)   │   │
+         │(Post│ │  └─────────────────┘   │
+         │GIS) │ │                        │
+         └─────┘ │  ┌──────────┐┌───────┐ │
+                  │  │Auth      ││Auth   │ │
+                  │  │Frontend  ││Backend│ │
+                  │  └──────────┘└───────┘ │
+                  └────────────────────────┘
+                  │
+       ┌──────────▼──────────────────────┐
+       │   Calculation Engine            │
+       │   (Spring Boot WebFlux)         │
+       │                                 │
+       │  ┌──────────┐  ┌────────────┐   │
+       │  │Engine DB │  │PostGIS     │   │
+       │  │(Postgres)│  │Calculator  │   │
+       │  └──────────┘  └────────────┘   │
+       └─────────────────────────────────┘
+```
+
+### Services
+
+| Service | Technology | Port | Description |
+|---------|-----------|------|-------------|
+| main-proxy | Nginx | 80 | Reverse proxy, routes traffic |
+| gateway | Spring Cloud Gateway | 8080 | API routing, CORS, auth relay |
+| core-frontend | Vue.js 3 + Nginx | 80 | Main web application |
+| core-backend | Spring Boot 3 | 8080 | REST API, Flyway migrations |
+| core-backend-db | PostGIS | 5432 | Main database with spatial support |
+| authentication | Keycloak | 8080 | SSO, OAuth2, realm management |
+| authentication-frontend | Vue.js 3 + Nginx | 80 | Admin portal |
+| authentication-backend | Spring Boot | 8081 | Admin API (CardPG) |
+| authentication-db | PostgreSQL 15 | 5432 | Keycloak database |
+| geo-calculation-engine-app | Spring Boot WebFlux | 8080 | Environmental calculations |
+| calculator-engine-db | PostgreSQL 17 | 5432 | Calculation engine config DB |
+| postgis-calculator-db | PostGIS 17 | 5432 | Spatial calculation DB |
+| geoserver | GeoServer 2.28 | 8080 | OGC map server (WMS/WFS) |
+
+### Networks
+
+| Network | Services |
+|---------|----------|
+| gateway_network | proxy, gateway, frontends, backends, keycloak, geoserver |
+| core-backend-network | core-backend, core-backend-db, geoserver |
+| authentication_network | keycloak, auth-frontend, auth-backend, auth-db |
+| geo_calc_network | calc-engine, calculator-engine-db, postgis-calculator-db, geoserver |
+
+---
+
+## Repositories
+
+| Repository | Description | Docker Image |
+|-----------|-------------|--------------|
+| [core](https://github.com/Rural-Environmental-Registry/core) | Deploy orchestrator (this repo) | — |
+| [gateway](https://github.com/Rural-Environmental-Registry/gateway) | Spring Cloud Gateway | `rer-gateway` |
+| [frontend](https://github.com/Rural-Environmental-Registry/frontend) | Vue.js 3 SPA | `rer-core-frontend` |
+| [backend](https://github.com/Rural-Environmental-Registry/backend) | Spring Boot REST API | `rer-core-backend` |
+| [authentication](https://github.com/Rural-Environmental-Registry/authentication) | Keycloak + Admin Portal | `rer-auth-keycloak`, `rer-auth-frontend`, `rer-auth-backend` |
+| [calc_engine](https://github.com/Rural-Environmental-Registry/calc_engine) | Calculation Engine | `rer-calc-engine` |
+| [map_component](https://github.com/Rural-Environmental-Registry/map_component) | Leaflet map library (npm) | — (npm package) |
+
+---
+
+## Accessing the Services
+
+After starting the stack, access the following URLs (assuming default `localhost` configuration):
+
+| Service | URL | Default Credentials |
+|---------|-----|-------------------|
+| Main Application | http://localhost | admin-cardpg@gmail.com / NovaSenhaForte123! |
+| Keycloak Admin | http://localhost/keycloak/admin | admin / admin |
+| GeoServer | http://localhost/geoserver/ | admin / geoserver |
+
+> ⚠️ **Change all default passwords before deploying to production.**
+
+---
+
+## Configuration
+
+All configuration is managed through the `.env` file. Key settings:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `HOSTNAME_DNS` | Server hostname | `localhost` |
+| `RER_HTTP_PORT` | HTTP port | `80` |
+| `HTTP_HTTPS` | Protocol | `http` |
+| `BASE_URL` | URL subpath (optional) | _(empty)_ |
+| `CORE_BACKEND_DB_PASSWORD` | Core database password | `car_pass` |
+| `AUTH_DB_PASSWORD` | Keycloak database password | `senhaSegura` |
+| `KEYCLOAK_ADMIN_PASSWORD` | Keycloak admin password | `admin` |
+| `GEOSERVER_ADMIN_PASSWORD` | GeoServer admin password | `geoserver` |
+
+For a complete list of variables, see [`.env.example`](.env.example).
 
 ---
 
 ## Monitoring and Logs
 
-### Check Service Status
-
 ```bash
-# General Status
+# Status of all services
 docker compose ps
 
-# Logs from all services
+# Follow all logs
 docker compose logs -f
 
-# Logs from a specific service
+# Follow a specific service
 docker compose logs -f core-backend
+
+# Check resource usage
+docker stats
 ```
 
-### Check Service Connectivity
+### Health Checks
+
+All database services include health checks. Check their status:
 
 ```bash
-# Verify if services are responding
-curl -f http://localhost:8080 || echo "Gateway is not responding"
+docker inspect --format='{{.State.Health.Status}}' rer-core-backend-db
+docker inspect --format='{{.State.Health.Status}}' rer-authentication-db
+docker inspect --format='{{.State.Health.Status}}' rer-calculator-engine-db
+docker inspect --format='{{.State.Health.Status}}' rer-postgis-calculator-db
 ```
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
-
-#### Ports in Use
+### Services not starting
 
 ```bash
-# Check for ports in use
-sudo netstat -tlnp | grep :8080
+# Check which services failed
+docker compose ps --filter "status=exited"
+
+# View logs for the failed service
+docker compose logs <service-name>
 ```
 
-#### Docker Permission Issues
+### Database connection errors
 
 ```bash
-# Add user to the Docker group
-sudo usermod -aG docker $USER
-newgrp docker
+# Verify database is healthy
+docker compose exec core-backend-db pg_isready -U car_user -d car_db
 
-# Restart Docker if needed
-sudo systemctl restart docker
+# Check environment variables
+docker compose config | grep DB_
 ```
 
-#### Outdated Submodules
+### GeoServer not loading layers
+
+The `geoserver-init` sidecar runs once after GeoServer starts. Check its logs:
 
 ```bash
-# Update all submodules
-git submodule update --init --recursive
-
-# Force update
-git submodule foreach git pull origin main
+docker compose logs geoserver-init
 ```
 
-#### Cleaning Up Containers
+If it failed, re-run manually:
 
 ```bash
-# Stop and remove all containers
+docker exec rer-geoserver bash -c '/opt/populate_geoserver.sh'
+```
+
+### Port conflicts
+
+If port 80 is already in use:
+
+```bash
+# Change the port in .env
+echo "RER_HTTP_PORT=8080" >> .env
+
+# Restart
+docker compose down && docker compose up -d
+```
+
+### Reset everything
+
+```bash
+# Stop and remove all containers, networks, and volumes
 docker compose down -v
 
-# Remove unused images
-docker system prune -a
+# Start fresh
+docker compose up -d
 ```
-
----
-
-## Important Notes
-
-- **Required Ports:** 80/443 (NGINX Proxy), 8080 (Main Gateway), 5432 (Postgres backend)
-- **Minimum Requirements:** 4GB RAM, 2 CPU cores, 10GB disk space
-- **Supported Systems:** Linux (recommended), macOS, Windows com WSL2
-- **Persistence:** Docker volumes for PostgreSQL data and configurations
-- **Security:** Change default credentials in production environments
-- **Submodules:** Check each submodule’s README for advanced or customized setup instructions
 
 ---
 
 ## License
 
-This project is distributed under the [GPL-3.0](https://github.com/Rural-Environmental-Registry/core/blob/main/LICENSE).
+This project is licensed under the **GNU General Public License v3.0** — see the [LICENSE](LICENSE) file for details.
+
+RER is a **Digital Public Good** (DPG), developed to be freely used, modified, and distributed by governments and organizations worldwide.
 
 ---
 
 ## Contribution
 
-Contributions are welcome! To contribute to the project:
+Contributions are welcome! Please follow these steps:
 
-1. Fork the repository
-2. Create a branch for your feature (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1. Fork the relevant repository
+2. Create a feature branch from `develop`
+3. Make your changes
+4. Submit a Pull Request to `develop`
 
-By submitting a pull request or patch, you affirm that you are the author of the code and that you agree to license your contribution under the terms of the GNU General Public License v3.0 (or later) for this project. You also agree to assign the copyright of your contribution to the Ministry of Management and Innovation in Public Services (MGI), the owner of this project.
+### Branch Strategy
 
-### Code of Conduct
-
-This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a welcoming and harassment-free environment for all contributors. By participating, you are expected to uphold this code. Please report unacceptable behavior through the GitHub issue tracker.
+| Branch | Purpose |
+|--------|---------|
+| `develop` | Active development |
+| `staging` | QA / Homologation |
+| `demo` | Pre-production |
+| `main` | Production releases |
 
 ---
 
 ## Support
 
-For technical support or project-related questions:
-
-- **Documentation:** Check the individual READMEs for each submodule
-- **Issues:** Report problems via the GitHub issue tracker
-
----
-
-## Responsibilities
-
-For technical support or questions about the project, please, fill a issue.
-
-Copyright (C) 2024 Ministry of Management and Innovation in Public Services (MGI), Government of Brazil.
-
-This program was developed by Dataprev as part of a contract with the Ministry of Management and Innovation in Public Services (MGI).
+- 📧 Email: [support contact]
+- 🐛 Issues: [GitHub Issues](https://github.com/Rural-Environmental-Registry/core/issues)
+- 📖 Documentation: [Wiki](https://github.com/Rural-Environmental-Registry/core/wiki)

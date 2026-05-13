@@ -67,3 +67,12 @@ package-lock.json
 .kiro
 .amazonq/
 .continue/
+
+# Cloned repositories (managed by setup.sh, not submodules)
+/Core-Frontend/
+/Core-Backend/
+/Authentication/
+/Calculation-Engine/
+/Gateway/
+/Map-Component/
+/Geoserver/
