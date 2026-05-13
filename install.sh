@@ -1,384 +1,340 @@
-#!/usr/bin/env bash
-# =============================================================================
-# RER - Rural Environmental Registry (Digital Public Good)
-# Script de Instalação One-Liner
-# =============================================================================
+#!/bin/bash
+# RER - Rural Environmental Registry
+# One-command install for production/demo deployment
+# Usage: curl -fsSL https://raw.githubusercontent.com/Rural-Environmental-Registry/core/main/install.sh | sh
+#    or: ./install.sh
 #
-# Uso:
-#   curl -fsSL https://raw.githubusercontent.com/Rural-Environmental-Registry/core/main/install.sh | bash
-#
-# Ou, para especificar diretório de instalação:
-#   curl -fsSL https://raw.githubusercontent.com/Rural-Environmental-Registry/core/main/install.sh | bash -s -- --dir /opt/rer
-#
-# =============================================================================
+# Prerequisites: Docker 24+ with Docker Compose v2
+# No Java, Node, Maven, or source code required.
 
-set -euo pipefail
+set -e
 
-# ---------------------------------------------------------------------------
-# Configuração
-# ---------------------------------------------------------------------------
-RER_VERSION="${RER_VERSION:-latest}"
-RER_REPO="Rural-Environmental-Registry"
-RER_BRANCH="${RER_BRANCH:-main}"
-GITHUB_RAW="https://raw.githubusercontent.com/${RER_REPO}/core/${RER_BRANCH}"
-GITHUB_RAW_CALC="https://raw.githubusercontent.com/${RER_REPO}/calc_engine/${RER_BRANCH}"
-INSTALL_DIR="${HOME}/rer"
-COMPOSE_PROJECT_NAME="rer"
+# Colors
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
+info() { echo -e "${GREEN}[RER]${NC} $1"; }
+warn() { echo -e "${YELLOW}[RER]${NC} $1"; }
+error() { echo -e "${RED}[RER]${NC} $1"; exit 1; }
 
-# Cores para output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+RER_VERSION="${RER_VERSION:-1.0.0}"
+RER_DIR="${RER_DIR:-$HOME/rer}"
+RER_PORT="${RER_PORT:-8080}"
 
-# ---------------------------------------------------------------------------
-# Funções auxiliares
-# ---------------------------------------------------------------------------
-info()    { echo -e "${BLUE}[INFO]${NC} $*"; }
-success() { echo -e "${GREEN}[OK]${NC} $*"; }
-warn()    { echo -e "${YELLOW}[AVISO]${NC} $*"; }
-error()   { echo -e "${RED}[ERRO]${NC} $*" >&2; }
-fatal()   { error "$*"; exit 1; }
+# --- 1. Check prerequisites ---
+info "Checking prerequisites..."
 
-banner() {
-    echo ""
-    echo -e "${GREEN}"
-    echo "  ╔══════════════════════════════════════════════════════════╗"
-    echo "  ║                                                          ║"
-    echo "  ║   🌿  RER - Rural Environmental Registry                ║"
-    echo "  ║       Digital Public Good                                ║"
-    echo "  ║                                                          ║"
-    echo "  ╚══════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
-    echo ""
+if ! command -v docker &>/dev/null; then
+  error "Docker not found. Install: https://docs.docker.com/engine/install/"
+fi
+
+if ! docker compose version &>/dev/null; then
+  error "Docker Compose v2 not found. Install: https://docs.docker.com/compose/install/"
+fi
+
+if ! command -v openssl &>/dev/null; then
+  error "openssl not found. Install: apt-get install openssl"
+fi
+
+DOCKER_VERSION=$(docker version --format '{{.Server.Version}}' 2>/dev/null || echo "0")
+info "Docker $DOCKER_VERSION ✓"
+
+# --- 2. Create directory ---
+info "Setting up RER in $RER_DIR..."
+mkdir -p "$RER_DIR"
+cd "$RER_DIR"
+
+# --- 3. Generate .env ---
+if [ ! -f .env ]; then
+  info "Generating .env with defaults..."
+  cat > .env << EOF
+# RER Configuration
+RER_VERSION=${RER_VERSION}
+RER_PORT=${RER_PORT}
+
+# Database (auto-created)
+POSTGRES_USER=rer_admin
+POSTGRES_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9' | head -c 16)
+POSTGRES_DB=rer
+
+# Keycloak
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9' | head -c 16)
+KC_DB_URL=jdbc:postgresql://keycloak-db:5432/keycloak
+KC_DB_USERNAME=keycloak
+KC_DB_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9' | head -c 16)
+
+# Core Backend
+CORE_DB_URL=jdbc:postgresql://core-db:5432/rer
+CORE_DB_USERNAME=rer_admin
+CORE_DB_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9' | head -c 16)
+
+# Calculation Engine
+CALC_DB_URL=jdbc:postgresql://calc-db:5432/calc_engine
+CALC_DB_USERNAME=calc_admin
+CALC_DB_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9' | head -c 16)
+
+# GeoServer
+GEOSERVER_ADMIN_USER=admin
+GEOSERVER_ADMIN_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9' | head -c 16)
+EOF
+  warn "Generated random passwords in .env — review before production use!"
+else
+  info ".env already exists, keeping current values."
+fi
+
+# --- 4. Generate docker-compose.yml ---
+if [ -f docker-compose.yml ]; then
+  cp docker-compose.yml docker-compose.yml.bak
+  info "Backed up existing docker-compose.yml → docker-compose.yml.bak"
+fi
+info "Generating docker-compose.yml..."
+cat > docker-compose.yml << 'COMPOSE'
+services:
+  # --- Databases ---
+  core-db:
+    image: postgis/postgis:17-3.5-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rer}
+      POSTGRES_USER: ${CORE_DB_USERNAME}
+      POSTGRES_PASSWORD: ${CORE_DB_PASSWORD}
+    volumes:
+      - core-db-data:/var/lib/postgresql/data
+    networks: [rer-net]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CORE_DB_USERNAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  keycloak-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: ${KC_DB_USERNAME}
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD}
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    networks: [rer-net]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KC_DB_USERNAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  calc-db:
+    image: postgis/postgis:17-3.5-alpine
+    environment:
+      POSTGRES_DB: calc_engine
+      POSTGRES_USER: ${CALC_DB_USERNAME}
+      POSTGRES_PASSWORD: ${CALC_DB_PASSWORD}
+    volumes:
+      - calc-db-data:/var/lib/postgresql/data
+    networks: [rer-net]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CALC_DB_USERNAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # --- Services ---
+  gateway:
+    image: ghcr.io/rural-environmental-registry/rer-gateway:${RER_VERSION}
+    depends_on:
+      core-db: { condition: service_healthy }
+    networks: [rer-net]
+    restart: unless-stopped
+
+  core-frontend:
+    image: ghcr.io/rural-environmental-registry/rer-core-frontend:${RER_VERSION}
+    networks: [rer-net]
+    restart: unless-stopped
+
+  core-backend:
+    image: ghcr.io/rural-environmental-registry/rer-core-backend:${RER_VERSION}
+    environment:
+      SPRING_DATASOURCE_URL: ${CORE_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${CORE_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${CORE_DB_PASSWORD}
+      FRONTEND_URLS: http://localhost:${RER_PORT:-8080}
+      HASH_PREFIX: RER
+      CARDPG_ENGINE_BASE_URL: http://calc-engine:8080
+      CARDPG_ENGINE_TIMEOUT_CONNECT_MS: "5000"
+      CARDPG_ENGINE_TIMEOUT_READ_MS: "30000"
+      CARDPG_ENGINE_WORKFLOW: default
+    depends_on:
+      core-db: { condition: service_healthy }
+    networks: [rer-net]
+    restart: unless-stopped
+
+  auth-keycloak:
+    image: ghcr.io/rural-environmental-registry/rer-auth-keycloak:${RER_VERSION}
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB_URL: ${KC_DB_URL}
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY: edge
+    depends_on:
+      keycloak-db: { condition: service_healthy }
+    networks: [rer-net]
+    restart: unless-stopped
+
+  auth-frontend:
+    image: ghcr.io/rural-environmental-registry/rer-auth-frontend:${RER_VERSION}
+    networks: [rer-net]
+    restart: unless-stopped
+
+  auth-backend:
+    image: ghcr.io/rural-environmental-registry/rer-auth-backend:${RER_VERSION}
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      SPRING_DATASOURCE_USERNAME: ${KC_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${KC_DB_PASSWORD}
+    depends_on:
+      keycloak-db: { condition: service_healthy }
+    networks: [rer-net]
+    restart: unless-stopped
+
+  calc-engine:
+    image: ghcr.io/rural-environmental-registry/rer-calc-engine:${RER_VERSION}
+    environment:
+      SPRING_DATASOURCE_URL: ${CALC_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${CALC_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${CALC_DB_PASSWORD}
+    depends_on:
+      calc-db: { condition: service_healthy }
+    networks: [rer-net]
+    restart: unless-stopped
+
+  geoserver:
+    image: ghcr.io/rural-environmental-registry/rer-geoserver:${RER_VERSION}
+    environment:
+      GEOSERVER_ADMIN_USER: ${GEOSERVER_ADMIN_USER}
+      GEOSERVER_ADMIN_PASSWORD: ${GEOSERVER_ADMIN_PASSWORD}
+    volumes:
+      - geoserver-data:/opt/geoserver/data_dir
+    networks: [rer-net]
+    restart: unless-stopped
+
+  # --- Reverse Proxy ---
+  proxy:
+    image: nginx:alpine
+    ports:
+      - "${RER_PORT:-8080}:8080"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - gateway
+      - core-frontend
+      - auth-frontend
+      - auth-keycloak
+    networks: [rer-net]
+    restart: unless-stopped
+
+volumes:
+  core-db-data:
+  keycloak-db-data:
+  calc-db-data:
+  geoserver-data:
+
+networks:
+  rer-net:
+    driver: bridge
+COMPOSE
+
+# --- 5. Generate nginx.conf ---
+if [ -f nginx.conf ]; then
+  cp nginx.conf nginx.conf.bak
+fi
+cat > nginx.conf << 'NGINX'
+worker_processes auto;
+pid /tmp/nginx.pid;
+
+events { worker_connections 1024; }
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    sendfile on;
+    keepalive_timeout 65;
+
+    server {
+        listen 8080;
+
+        location / {
+            proxy_pass http://core-frontend:8080;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location /api/ {
+            proxy_pass http://gateway:8080/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location /keycloak/ {
+            proxy_pass http://auth-keycloak:8080/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host $host;
+        }
+
+        location /auth/ {
+            proxy_pass http://auth-frontend:8080/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location /geoserver/ {
+            proxy_pass http://geoserver:8080/geoserver/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location /health {
+            access_log off;
+            return 200 'ok';
+            add_header Content-Type text/plain;
+        }
+    }
 }
+NGINX
 
-# ---------------------------------------------------------------------------
-# Parse argumentos
-# ---------------------------------------------------------------------------
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --dir)
-            INSTALL_DIR="$2"
-            shift 2
-            ;;
-        --branch)
-            RER_BRANCH="$2"
-            GITHUB_RAW="https://raw.githubusercontent.com/${RER_REPO}/core/${RER_BRANCH}"
-            GITHUB_RAW_CALC="https://raw.githubusercontent.com/${RER_REPO}/calc_engine/${RER_BRANCH}"
-            shift 2
-            ;;
-        --help|-h)
-            echo "Uso: install.sh [--dir /caminho] [--branch main]"
-            echo ""
-            echo "Opções:"
-            echo "  --dir      Diretório de instalação (padrão: ~/rer)"
-            echo "  --branch   Branch do GitHub (padrão: main)"
-            echo "  --help     Mostra esta ajuda"
-            exit 0
-            ;;
-        *)
-            fatal "Argumento desconhecido: $1. Use --help para ver as opções."
-            ;;
-    esac
-done
+# --- 6. Pull and start ---
+info "Pulling images (version: $RER_VERSION)..."
+docker compose pull
 
-# ---------------------------------------------------------------------------
-# 1. Verificar/Instalar Docker
-# ---------------------------------------------------------------------------
-check_docker() {
-    info "Verificando Docker..."
+info "Starting RER..."
+docker compose up -d
 
-    if command -v docker &>/dev/null; then
-        DOCKER_VERSION=$(docker --version | grep -oP '\d+\.\d+\.\d+' | head -1)
-        success "Docker encontrado: v${DOCKER_VERSION}"
-    else
-        warn "Docker não encontrado. Instalando..."
-        install_docker
-    fi
+# --- 7. Wait for health ---
+info "Waiting for services to start..."
+sleep 10
 
-    # Verificar Docker Compose v2
-    if docker compose version &>/dev/null; then
-        COMPOSE_VERSION=$(docker compose version --short 2>/dev/null || echo "unknown")
-        success "Docker Compose encontrado: v${COMPOSE_VERSION}"
-    else
-        fatal "Docker Compose v2 não encontrado. Instale Docker Desktop ou docker-compose-plugin."
-    fi
+HEALTHY=$(docker compose ps --filter "status=running" --quiet 2>/dev/null | wc -l || echo "0")
+TOTAL=$(docker compose ps --quiet 2>/dev/null | wc -l || echo "0")
 
-    # Verificar se o daemon está rodando
-    if ! docker info &>/dev/null; then
-        warn "Docker daemon não está rodando. Tentando iniciar..."
-        sudo systemctl start docker 2>/dev/null || fatal "Não foi possível iniciar o Docker. Execute: sudo systemctl start docker"
-        sleep 3
-        docker info &>/dev/null || fatal "Docker daemon não respondeu."
-        success "Docker daemon iniciado."
-    fi
-}
-
-install_docker() {
-    if [[ -f /etc/os-release ]]; then
-        . /etc/os-release
-        case "$ID" in
-            ubuntu|debian)
-                info "Instalando Docker via apt..."
-                sudo apt-get update -qq
-                sudo apt-get install -y -qq ca-certificates curl gnupg
-                sudo install -m 0755 -d /etc/apt/keyrings
-                curl -fsSL "https://download.docker.com/linux/${ID}/gpg" | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-                sudo chmod a+r /etc/apt/keyrings/docker.gpg
-                echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${ID} ${VERSION_CODENAME} stable" | \
-                    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-                sudo apt-get update -qq
-                sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-                ;;
-            centos|rhel|fedora|rocky|alma*)
-                info "Instalando Docker via yum/dnf..."
-                sudo yum install -y yum-utils 2>/dev/null || sudo dnf install -y dnf-plugins-core
-                sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo 2>/dev/null || \
-                    sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-                sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 2>/dev/null || \
-                    sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-                ;;
-            *)
-                fatal "Distribuição '${ID}' não suportada para instalação automática. Instale Docker manualmente: https://docs.docker.com/engine/install/"
-                ;;
-        esac
-    else
-        fatal "Não foi possível detectar o sistema operacional. Instale Docker manualmente: https://docs.docker.com/engine/install/"
-    fi
-
-    # Iniciar e habilitar Docker
-    sudo systemctl enable docker
-    sudo systemctl start docker
-
-    # Adicionar usuário ao grupo docker
-    if ! groups | grep -q docker; then
-        sudo usermod -aG docker "$USER"
-        warn "Usuário adicionado ao grupo 'docker'. Pode ser necessário fazer logout/login."
-    fi
-
-    success "Docker instalado com sucesso."
-}
-
-# ---------------------------------------------------------------------------
-# 2. Preparar diretório de instalação
-# ---------------------------------------------------------------------------
-prepare_directory() {
-    info "Preparando diretório de instalação: ${INSTALL_DIR}"
-
-    mkdir -p "${INSTALL_DIR}"
-    cd "${INSTALL_DIR}"
-
-    # Criar estrutura de diretórios
-    mkdir -p config/nginx
-    mkdir -p config/Geoserver/docker
-    mkdir -p data/db-init/calculator_engine
-    mkdir -p data/db-init/postgis_calculator
-
-    success "Diretório preparado: ${INSTALL_DIR}"
-}
-
-# ---------------------------------------------------------------------------
-# 3. Baixar arquivos de configuração
-# ---------------------------------------------------------------------------
-download_configs() {
-    info "Baixando arquivos de configuração do GitHub..."
-
-    # docker-compose.yml
-    info "  → docker-compose.yml"
-    curl -fsSL "${GITHUB_RAW}/docker-compose.yml" -o docker-compose.yml
-
-    # .env.example → .env
-    info "  → .env.example"
-    curl -fsSL "${GITHUB_RAW}/.env.example" -o .env.example
-
-    if [[ ! -f .env ]]; then
-        cp .env.example .env
-        success "  Arquivo .env criado a partir do .env.example"
-    else
-        warn "  Arquivo .env já existe, mantendo configuração atual."
-    fi
-
-    # Nginx config
-    info "  → config/nginx/nginx.conf"
-    curl -fsSL "${GITHUB_RAW}/config/nginx/nginx.conf" -o config/nginx/nginx.conf
-
-    # Geoserver Dockerfile e populate script
-    info "  → config/Geoserver/docker/Dockerfile"
-    curl -fsSL "${GITHUB_RAW}/config/Geoserver/docker/Dockerfile" -o config/Geoserver/docker/Dockerfile
-
-    info "  → config/Geoserver/docker/populate_geoserver.sh"
-    curl -fsSL "${GITHUB_RAW}/config/Geoserver/docker/populate_geoserver.sh" -o config/Geoserver/docker/populate_geoserver.sh
-    chmod +x config/Geoserver/docker/populate_geoserver.sh
-
-    success "Arquivos de configuração baixados."
-}
-
-# ---------------------------------------------------------------------------
-# 4. Baixar SQL scripts de inicialização dos bancos
-# ---------------------------------------------------------------------------
-download_db_scripts() {
-    info "Baixando scripts de inicialização dos bancos de dados..."
-
-    local CALC_DB_PATH="src/main/resources/db_structure"
-
-    # Calculator Engine DB (5 evolutions)
-    for i in 0 1 2 3 4; do
-        info "  → calculator_engine/evolution_${i}.sql"
-        curl -fsSL "${GITHUB_RAW_CALC}/${CALC_DB_PATH}/calculator_engine/evolution_${i}.sql" \
-            -o "data/db-init/calculator_engine/evolution_${i}.sql"
-    done
-
-    # PostGIS Calculator DB (3 evolutions)
-    for i in 0 1 2; do
-        info "  → postgis_calculator/evolution_${i}.sql"
-        curl -fsSL "${GITHUB_RAW_CALC}/${CALC_DB_PATH}/postgis_calculator/evolution_${i}.sql" \
-            -o "data/db-init/postgis_calculator/evolution_${i}.sql"
-    done
-
-    success "Scripts de inicialização dos bancos baixados."
-}
-
-# ---------------------------------------------------------------------------
-# 5. Puxar imagens Docker
-# ---------------------------------------------------------------------------
-pull_images() {
-    info "Baixando imagens Docker (isso pode levar alguns minutos)..."
-
-    local IMAGES=(
-        "ghcr.io/rural-environmental-registry/rer-gateway:latest"
-        "ghcr.io/rural-environmental-registry/rer-core-frontend:latest"
-        "ghcr.io/rural-environmental-registry/rer-core-backend:latest"
-        "ghcr.io/rural-environmental-registry/rer-auth-keycloak:latest"
-        "ghcr.io/rural-environmental-registry/rer-auth-frontend:latest"
-        "ghcr.io/rural-environmental-registry/rer-auth-backend:latest"
-        "ghcr.io/rural-environmental-registry/rer-calc-engine:latest"
-        "postgis/postgis:latest"
-        "postgres:17"
-        "postgres:15"
-        "postgis/postgis:17-3.5-alpine"
-        "docker.osgeo.org/geoserver:2.28.0"
-        "nginx:alpine"
-        "docker:27-cli"
-    )
-
-    local total=${#IMAGES[@]}
-    local count=0
-
-    for img in "${IMAGES[@]}"; do
-        count=$((count + 1))
-        info "  [${count}/${total}] ${img}"
-        docker pull "${img}" --quiet || warn "Falha ao baixar ${img} — continuando..."
-    done
-
-    success "Imagens Docker baixadas."
-}
-
-# ---------------------------------------------------------------------------
-# 6. Iniciar o stack
-# ---------------------------------------------------------------------------
-start_stack() {
-    info "Iniciando o RER..."
-
-    cd "${INSTALL_DIR}"
-
-    # Build do Geoserver (imagem customizada)
-    info "Construindo imagem do GeoServer..."
-    docker compose build geoserver --quiet 2>/dev/null || docker compose build geoserver
-
-    # Subir tudo
-    info "Iniciando todos os serviços..."
-    docker compose up -d --remove-orphans
-
-    success "Serviços iniciados."
-}
-
-# ---------------------------------------------------------------------------
-# 7. Health checks
-# ---------------------------------------------------------------------------
-wait_for_services() {
-    info "Aguardando serviços ficarem prontos..."
-
-    local MAX_WAIT=180  # 3 minutos
-    local INTERVAL=10
-    local elapsed=0
-
-    # Aguardar o gateway responder
-    while [[ $elapsed -lt $MAX_WAIT ]]; do
-        if docker compose ps --format json 2>/dev/null | grep -q '"running"' || \
-           docker compose ps 2>/dev/null | grep -q "Up"; then
-
-            # Verificar se o gateway está respondendo
-            if curl -sf http://localhost:${RER_HTTP_PORT:-80}/ -o /dev/null 2>/dev/null; then
-                success "Serviços prontos!"
-                return 0
-            fi
-        fi
-
-        echo -ne "\r  ⏳ Aguardando... (${elapsed}s/${MAX_WAIT}s)"
-        sleep $INTERVAL
-        elapsed=$((elapsed + INTERVAL))
-    done
-
-    echo ""
-    warn "Timeout aguardando serviços. Verifique com: docker compose ps"
-    warn "Alguns serviços podem ainda estar inicializando."
-}
-
-# ---------------------------------------------------------------------------
-# 8. Exibir informações finais
-# ---------------------------------------------------------------------------
-show_info() {
-    local PORT="${RER_HTTP_PORT:-80}"
-    local HOST="${HOSTNAME_DNS:-localhost}"
-    local BASE="${BASE_URL:-}"
-
-    echo ""
-    echo -e "${GREEN}"
-    echo "  ╔══════════════════════════════════════════════════════════╗"
-    echo "  ║                                                          ║"
-    echo "  ║   ✅  RER instalado com sucesso!                        ║"
-    echo "  ║                                                          ║"
-    echo "  ╚══════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
-    echo ""
-    echo "  📁 Diretório de instalação: ${INSTALL_DIR}"
-    echo ""
-    echo "  🌐 URLs de acesso:"
-    echo "     Portal:     http://${HOST}:${PORT}${BASE}"
-    echo "     Keycloak:   http://${HOST}:${PORT}${BASE}/keycloak/admin"
-    echo "     GeoServer:  http://${HOST}:${PORT}${BASE}/geoserver/"
-    echo ""
-    echo "  🔑 Credenciais padrão:"
-    echo "     Sistema:    admin-cardpg@gmail.com / NovaSenhaForte123!"
-    echo "     Keycloak:   admin / admin"
-    echo "     GeoServer:  admin / geoserver"
-    echo ""
-    echo "  📋 Comandos úteis:"
-    echo "     cd ${INSTALL_DIR}"
-    echo "     docker compose ps          # Status dos serviços"
-    echo "     docker compose logs -f     # Logs em tempo real"
-    echo "     docker compose down        # Parar tudo"
-    echo "     docker compose up -d       # Reiniciar"
-    echo ""
-    echo "  📖 Documentação: https://github.com/Rural-Environmental-Registry/core"
-    echo ""
-}
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-main() {
-    banner
-    check_docker
-    prepare_directory
-    download_configs
-    download_db_scripts
-    pull_images
-    start_stack
-    wait_for_services
-    show_info
-}
-
-main "$@"
+echo ""
+info "============================================"
+info "  RER - Rural Environmental Registry"
+info "============================================"
+info ""
+info "  URL:      http://localhost:${RER_PORT}"
+info "  Version:  ${RER_VERSION}"
+info "  Status:   ${HEALTHY}/${TOTAL} services running"
+info ""
+info "  Credentials in: $RER_DIR/.env"
+info ""
+info "  Commands:"
+info "    Stop:    cd $RER_DIR && docker compose down"
+info "    Start:   cd $RER_DIR && docker compose up -d"
+info "    Logs:    cd $RER_DIR && docker compose logs -f"
+info "    Update:  RER_VERSION=x.y.z ./install.sh"
+info ""
+info "============================================"
