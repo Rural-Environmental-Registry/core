@@ -115,10 +115,10 @@ O gateway usa env vars para nomes de serviço (funciona em Docker Compose e K8s)
 
 ### Auth Backend (runtime)
 - `KEYCLOAK_URL=http://authentication:8080/keycloak` — URL interna do Keycloak
-- `SERVER_CONTEXT_PATH=/` — context path (raiz)
+- `SERVER_CONTEXT_PATH=/` — context path (default: / for standalone)
 
 ### Core Backend (runtime)
-- `SERVER_SERVLET_CONTEXT_PATH=/` — context path (raiz)
+- `SERVER_SERVLET_CONTEXT_PATH=/cardpgbackend` — context path (default keeps backward compat)
 
 ## Builds Locais
 
@@ -146,7 +146,7 @@ cd authentication/cardpg && podman build -t rer-auth-backend:local .
 1. **Frontend**: `VITE_BASE_URL=/` (era `/rectest/`)
 2. **Auth frontend**: `VITE_BASE_URL=/auth/`, nginx try_files corrigido
 3. **Keycloak**: `KC_HTTP_RELATIVE_PATH=/keycloak` (era `/rectest/keycloak`)
-4. **Core backend**: `server.servlet.context-path=/` (era `/cardpgbackend`)
+4. **Core backend**: `server.servlet.context-path` parametrizable via env (default `/cardpgbackend`)
 5. **Auth backend**: `contextPath=/` + busca por email no credentials endpoint
 6. **Gateway**: env vars para nomes de serviço + SPRING_CONFIG_LOCATION externo
 7. **geoserver-init**: curl em vez de docker.sock (compatível Podman)
