@@ -11,58 +11,46 @@ spring:
               - PUT
               - DELETE
               - OPTIONS
-      default-filters:
-        - AddRequestHeader=X-Forwarded-Host, ${HOSTNAME_DNS}
-        - AddRequestHeader=X-Forwarded-Proto, ${HTTP_HTTPS}
       routes:
-        - id: ${AUTHENTICATION_FRONTEND_KEYCLOAK_SERVICE_NAME}
-          uri: http://${AUTHENTICATION_FRONTEND_KEYCLOAK_SERVICE_NAME}
+        - id: authentication-frontend
+          uri: http://${AUTHENTICATION_FRONTEND_SERVICE_NAME:auth-frontend}:8080
           predicates:
-            - Path=${BASE_URL}${AUTHENTICATION_FRONTEND_KEYCLOAK_BASE_URL}/**
-          filters:
-            - RewriteResponseHeader=Location, http://${AUTHENTICATION_FRONTEND_KEYCLOAK_SERVICE_NAME}(?<segment>/?.*), http://${HOSTNAME_DNS}${BASE_URL}${AUTHENTICATION_FRONTEND_KEYCLOAK_BASE_URL}${DOLLAR}{segment}
-
-        - id: ${CALCULATION_ENGINE_API_SERVICE_NAME}
-          uri: http://${CALCULATION_ENGINE_API_SERVICE_NAME}:8080
-          predicates:
-            - Path=${BASE_URL}${CALCULATION_ENGINE_API_BASE_URL}/**
-          filters:
-            - StripPrefix=2 # remove ${BASE_URL}/${CALCULATION_ENGINE_API_BASE_URL}
+            - Path=${AUTHENTICATION_FRONTEND_KEYCLOAK_BASE_URL:/auth}/**
 
         - id: keycloak
-          uri: http://${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME}:8080
+          uri: http://${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME:auth-keycloak}:8080
           predicates:
-            - Path=${BASE_URL}${AUTHENTICATION_BASE_KEYCLOAK_BASE_URL}/**
-          filters:
-            - RewriteResponseHeader=Location, http://${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME}(?<segment>/?.*), http://${HOSTNAME_DNS}${BASE_URL}${AUTHENTICATION_BASE_KEYCLOAK_BASE_URL}${DOLLAR}{segment}
+            - Path=${AUTHENTICATION_BASE_KEYCLOAK_BASE_URL:/keycloak}/**
 
-        - id: ${AUTHENTICATION_BACKEND_KEYCLOAK_SERVICE_NAME}
-          uri: http://${AUTHENTICATION_BACKEND_KEYCLOAK_SERVICE_NAME}:8081
+        - id: authentication-backend
+          uri: http://${AUTHENTICATION_BACKEND_SERVICE_NAME:auth-backend}:8081
           predicates:
-            - Path=${BASE_URL}${AUTHENTICATION_BACKEND_KEYCLOAK_BASE_URL}/**
-          filters:
-            - RewriteResponseHeader=Location, http://${AUTHENTICATION_BACKEND_KEYCLOAK_SERVICE_NAME}(?<segment>/?.*), http://${HOSTNAME_DNS}${BASE_URL}${AUTHENTICATION_BACKEND_KEYCLOAK_BASE_URL}${DOLLAR}{segment}
+            - Path=${AUTHENTICATION_BACKEND_KEYCLOAK_BASE_URL:/auth-backend}/**
 
-        - id: ${CORE_BACKEND_API_SERVICE_NAME}
-          uri: http://${CORE_BACKEND_API_SERVICE_NAME}:8080
+        - id: core-backend
+          uri: http://${CORE_BACKEND_API_SERVICE_NAME:core-backend}:8080
           predicates:
-            - Path=${BASE_URL}${CORE_BACKEND_API_CONTEXT_PATH}/**
-          filters:
-            - RewriteResponseHeader=Location, http://${CORE_BACKEND_API_SERVICE_NAME}(?<segment>/?.*), http://${HOSTNAME_DNS}${BASE_URL}${CORE_BACKEND_API_CONTEXT_PATH}${DOLLAR}{segment}
+            - Path=${CORE_BACKEND_API_CONTEXT_PATH:/cardpgbackend}/**
+
+        - id: calculation-engine
+          uri: http://${CALCULATION_ENGINE_API_SERVICE_NAME:calc-engine}:8080
+          predicates:
+            - Path=${CALCULATION_ENGINE_API_BASE_URL:/calculation-engine}/**
+
+        - id: geoserver
+          uri: http://${GEOSERVER_SERVICE_NAME:geoserver}:8080
+          predicates:
+            - Path=${GEOSERVER_BASE_URL:/geoserver}/**
 
         - id: actuator
           uri: http://localhost:8080
           predicates:
-            - Path=${BASE_URL}/gateway/actuator/**
-          filters:
-            - StripPrefix=1 # remove /gateway
+            - Path=/actuator/**
 
-        - id: ${CORE_FRONTEND_SERVICE_NAME}
-          uri: http://${CORE_FRONTEND_SERVICE_NAME}
+        - id: core-frontend
+          uri: http://${CORE_FRONTEND_SERVICE_NAME:core-frontend}:8080
           predicates:
             - Path=/**
-          filters:
-            - RewriteResponseHeader=Location, http://${CORE_FRONTEND_SERVICE_NAME}(?<segment>/?.*), http://${HOSTNAME_DNS}${DOLLAR}{segment}
 
 management:
   endpoints:
