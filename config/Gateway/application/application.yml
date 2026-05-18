@@ -16,7 +16,7 @@ spring:
       # via their own env vars (KC_HOSTNAME_URL, VITE_BASE_URL, etc).
       # The reverse proxy (nginx) forwards X-Forwarded-Host/Proto headers.
       default-filters:
-        - DedupeResponseHeader=Access-Control-Allow-Origin
+        - DedupeResponseHeader=Access-Control-Allow-Origin RETAIN_FIRST
       routes:
         # Keycloak: generates correct redirects via KC_HOSTNAME_URL env var
         - id: keycloak
