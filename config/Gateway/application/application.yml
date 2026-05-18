@@ -11,8 +11,6 @@ spring:
               - PUT
               - DELETE
               - OPTIONS
-      default-filters:
-        - DedupeResponseHeader=Access-Control-Allow-Origin
       routes:
         - id: keycloak
           uri: http://${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME:authentication}:8080
@@ -48,11 +46,7 @@ spring:
           predicates:
             - Path=/geoserver/**
 
-        - id: actuator
-          uri: http://localhost:8080
-          predicates:
-            - Path=/actuator/**
-
+        # Catch-all: frontend (all containers use port 8080 via nginx non-root config)
         - id: core-frontend
           uri: http://${CORE_FRONTEND_SERVICE_NAME:core-frontend}:8080
           predicates:
