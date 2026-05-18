@@ -11,12 +11,20 @@ spring:
               - PUT
               - DELETE
               - OPTIONS
+      # Note: RewriteResponseHeader filters were intentionally removed.
+      # All downstream services are configured to generate correct public-facing URLs
+      # via their own env vars (KC_HOSTNAME_URL, VITE_BASE_URL, etc).
+      # The reverse proxy (nginx) forwards X-Forwarded-Host/Proto headers.
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin
       routes:
+        # Keycloak: generates correct redirects via KC_HOSTNAME_URL env var
         - id: keycloak
           uri: http://${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME:authentication}:8080
           predicates:
             - Path=/keycloak/**
 
+        # Auth backend (Spring Boot, port 8081): context-path=/ after StripPrefix
         - id: authentication-backend
           uri: http://${AUTHENTICATION_BACKEND_SERVICE_NAME:authentication-backend}:8081
           predicates:
@@ -24,16 +32,19 @@ spring:
           filters:
             - StripPrefix=1
 
+        # Auth frontend (Vue SPA, nginx port 8080): handles its own routing via try_files
         - id: authentication-frontend
           uri: http://${AUTHENTICATION_FRONTEND_SERVICE_NAME:authentication-frontend}:8080
           predicates:
             - Path=/auth/**
 
+        # Core backend (Spring Boot, port 8080): context-path=/cardpgbackend (no strip needed)
         - id: core-backend
           uri: http://${CORE_BACKEND_API_SERVICE_NAME:core-backend}:8080
           predicates:
             - Path=/cardpgbackend/**
 
+        # Calculation engine (Spring WebFlux, port 8080): context-path=/ after StripPrefix
         - id: calculation-engine
           uri: http://${CALCULATION_ENGINE_API_SERVICE_NAME:geo-calculation-engine-app}:8080
           predicates:
@@ -41,12 +52,14 @@ spring:
           filters:
             - StripPrefix=1
 
+        # GeoServer (port 8080): handles /geoserver path internally
         - id: geoserver
           uri: http://${GEOSERVER_SERVICE_NAME:geoserver}:8080
           predicates:
             - Path=/geoserver/**
 
-        # Catch-all: frontend (all containers use port 8080 via nginx non-root config)
+        # Catch-all: core frontend (Vue SPA, nginx port 8080)
+        # Redirects after login are handled by the frontend app via VITE_AUTH_MODULE_URL
         - id: core-frontend
           uri: http://${CORE_FRONTEND_SERVICE_NAME:core-frontend}:8080
           predicates:
