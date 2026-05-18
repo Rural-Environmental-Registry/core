@@ -37,7 +37,7 @@ docker compose up -d   # ou: podman compose up -d
 
 | Serviço | Usuário | Senha |
 |---------|---------|-------|
-| App (login) | admin-cardpg@gmail.com | Admin@123 |
+| App (login) | admin-cardpg@gmail.com | Admin@123 (reset via Keycloak admin) |
 | Keycloak admin | admin | admin |
 | GeoServer | admin | geoserver |
 

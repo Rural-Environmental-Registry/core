@@ -316,7 +316,6 @@ services:
   # ---------------------------------------------------------------------------
   # GeoServer Init (popula workspace, estilos, camadas)
   # Executa uma vez após o GeoServer iniciar.
-  # Usa curl para aguardar e docker/podman exec para rodar o script interno.
   # ---------------------------------------------------------------------------
   geoserver-init:
     image: curlimages/curl:latest
@@ -325,25 +324,6 @@ services:
       - geoserver
     networks:
       - gateway_network
-    entrypoint: ["/bin/sh", "-c"]
-    command: >
-      "echo 'Aguardando GeoServer iniciar...' &&
-      for i in $(seq 1 30); do
-        if curl -sf http://geoserver:8080/geoserver/web/ > /dev/null 2>&1; then
-          echo 'GeoServer acessível — executando populate_geoserver.sh...' &&
-          curl -sf -u $${GEOSERVER_ADMIN_USER}:$${GEOSERVER_ADMIN_PASSWORD}
-            http://geoserver:8080/geoserver/rest/workspaces
-            -H 'Content-Type: application/json'
-            -d '{\"workspace\":{\"name\":\"$${WORKSPACE_NAME}\"}}' || true &&
-          curl -sf -u $${GEOSERVER_ADMIN_USER}:$${GEOSERVER_ADMIN_PASSWORD}
-            http://geoserver:8080/geoserver/rest/workspaces/$${WORKSPACE_NAME}/datastores
-            -H 'Content-Type: application/json'
-            -d '{\"dataStore\":{\"name\":\"$${DATASTORE_NAME}\",\"connectionParameters\":{\"host\":\"core-backend-db\",\"port\":\"5432\",\"database\":\"$${DB_NAME}\",\"schema\":\"public\",\"user\":\"$${DB_USER}\",\"passwd\":\"$${DB_PASSWORD}\",\"dbtype\":\"postgis\"}}}' || true &&
-          echo 'GeoServer init concluído!' && exit 0;
-        fi;
-        echo "Tentativa $i/30 — aguardando..." && sleep 10;
-      done;
-      echo 'GeoServer não respondeu após 5 min — init abortado.'"
     environment:
       GEOSERVER_ADMIN_USER: "${GEOSERVER_ADMIN_USER}"
       GEOSERVER_ADMIN_PASSWORD: "${GEOSERVER_ADMIN_PASSWORD}"
@@ -352,6 +332,32 @@ services:
       DB_NAME: "${CORE_BACKEND_DB_NAME}"
       DB_USER: "${CORE_BACKEND_DB_USER}"
       DB_PASSWORD: "${CORE_BACKEND_DB_PASSWORD}"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo 'Aguardando GeoServer iniciar...'
+        i=0
+        while [ $$i -lt 30 ]; do
+          if curl -sf http://geoserver:8080/geoserver/web/ > /dev/null 2>&1; then
+            echo 'GeoServer acessivel - criando workspace...'
+            curl -sf -u $$GEOSERVER_ADMIN_USER:$$GEOSERVER_ADMIN_PASSWORD \
+              -X POST http://geoserver:8080/geoserver/rest/workspaces \
+              -H 'Content-Type: application/json' \
+              -d "{\"workspace\":{\"name\":\"$$WORKSPACE_NAME\"}}" || true
+            echo 'Criando datastore...'
+            curl -sf -u $$GEOSERVER_ADMIN_USER:$$GEOSERVER_ADMIN_PASSWORD \
+              -X POST "http://geoserver:8080/geoserver/rest/workspaces/$$WORKSPACE_NAME/datastores" \
+              -H 'Content-Type: application/json' \
+              -d "{\"dataStore\":{\"name\":\"$$DATASTORE_NAME\",\"connectionParameters\":{\"entry\":[{\"@key\":\"host\",\"$\":\"core-backend-db\"},{\"@key\":\"port\",\"$\":\"5432\"},{\"@key\":\"database\",\"$\":\"$$DB_NAME\"},{\"@key\":\"schema\",\"$\":\"public\"},{\"@key\":\"user\",\"$\":\"$$DB_USER\"},{\"@key\":\"passwd\",\"$\":\"$$DB_PASSWORD\"},{\"@key\":\"dbtype\",\"$\":\"postgis\"}]}}}" || true
+            echo 'GeoServer init concluido!'
+            exit 0
+          fi
+          i=$$((i + 1))
+          echo "Tentativa $$i/30 - aguardando..."
+          sleep 10
+        done
+        echo 'GeoServer nao respondeu apos 5 min - init abortado.'
+        exit 1
     restart: "no"
 
 # =============================================================================
