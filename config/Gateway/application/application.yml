@@ -35,8 +35,6 @@ spring:
           uri: http://${CORE_BACKEND_API_SERVICE_NAME:core-backend}:8080
           predicates:
             - Path=/cardpgbackend/**
-          filters:
-            - StripPrefix=1
 
         - id: calculation-engine
           uri: http://${CALCULATION_ENGINE_API_SERVICE_NAME:geo-calculation-engine-app}:8080
