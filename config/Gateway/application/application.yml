@@ -12,35 +12,41 @@ spring:
               - DELETE
               - OPTIONS
       routes:
-        - id: authentication-frontend
-          uri: http://${AUTHENTICATION_FRONTEND_SERVICE_NAME:auth-frontend}:8080
-          predicates:
-            - Path=${AUTHENTICATION_FRONTEND_KEYCLOAK_BASE_URL:/auth}/**
-
         - id: keycloak
-          uri: http://${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME:auth-keycloak}:8080
+          uri: http://${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME:authentication}:8080
           predicates:
-            - Path=${AUTHENTICATION_BASE_KEYCLOAK_BASE_URL:/keycloak}/**
+            - Path=/keycloak/**
 
         - id: authentication-backend
-          uri: http://${AUTHENTICATION_BACKEND_SERVICE_NAME:auth-backend}:8081
+          uri: http://${AUTHENTICATION_BACKEND_SERVICE_NAME:authentication-backend}:8081
           predicates:
-            - Path=${AUTHENTICATION_BACKEND_KEYCLOAK_BASE_URL:/auth-backend}/**
+            - Path=/auth-backend/**
+          filters:
+            - StripPrefix=1
+
+        - id: authentication-frontend
+          uri: http://${AUTHENTICATION_FRONTEND_SERVICE_NAME:authentication-frontend}:8080
+          predicates:
+            - Path=/auth/**
 
         - id: core-backend
           uri: http://${CORE_BACKEND_API_SERVICE_NAME:core-backend}:8080
           predicates:
-            - Path=${CORE_BACKEND_API_CONTEXT_PATH:/cardpgbackend}/**
+            - Path=/cardpgbackend/**
+          filters:
+            - StripPrefix=1
 
         - id: calculation-engine
-          uri: http://${CALCULATION_ENGINE_API_SERVICE_NAME:calc-engine}:8080
+          uri: http://${CALCULATION_ENGINE_API_SERVICE_NAME:geo-calculation-engine-app}:8080
           predicates:
-            - Path=${CALCULATION_ENGINE_API_BASE_URL:/calculation-engine}/**
+            - Path=/calculation-engine/**
+          filters:
+            - StripPrefix=1
 
         - id: geoserver
           uri: http://${GEOSERVER_SERVICE_NAME:geoserver}:8080
           predicates:
-            - Path=${GEOSERVER_BASE_URL:/geoserver}/**
+            - Path=/geoserver/**
 
         - id: actuator
           uri: http://localhost:8080

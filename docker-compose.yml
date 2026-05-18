@@ -49,7 +49,7 @@ services:
       CALCULATION_ENGINE_API_SERVICE_NAME: "geo-calculation-engine-app"
       GEOSERVER_SERVICE_NAME: "geoserver"
       AUTHENTICATION_FRONTEND_KEYCLOAK_BASE_URL: "/auth"
-      AUTHENTICATION_BASE_KEYCLOAK_BASE_URL: "/rectest/keycloak"
+      AUTHENTICATION_BASE_KEYCLOAK_BASE_URL: "/keycloak"
       AUTHENTICATION_BACKEND_KEYCLOAK_BASE_URL: "/auth-backend"
       CORE_BACKEND_API_CONTEXT_PATH: "/cardpgbackend"
       CALCULATION_ENGINE_API_BASE_URL: "/calculation-engine"
@@ -69,8 +69,10 @@ services:
   # Core Frontend (Vue.js 3 + Nginx)
   # ---------------------------------------------------------------------------
   core-frontend:
-    image: ghcr.io/rural-environmental-registry/rer-core-frontend:${RER_VERSION:-1.0.0}
+    image: localhost/rer-core-frontend:local
     container_name: rer-core-frontend
+    volumes:
+      - ./config/frontend-config.json:/usr/share/nginx/html/config.json:ro
     restart: unless-stopped
     networks:
       - gateway_network
@@ -79,7 +81,7 @@ services:
   # Core Backend (Spring Boot + Flyway)
   # ---------------------------------------------------------------------------
   core-backend:
-    image: ghcr.io/rural-environmental-registry/rer-core-backend:${RER_VERSION:-1.0.0}
+    image: localhost/rer-core-backend:local
     container_name: rer-core-backend
     environment:
       SPRING_DATASOURCE_URL: "jdbc:postgresql://core-backend-db:5432/${CORE_BACKEND_DB_NAME}"
@@ -126,7 +128,7 @@ services:
   # Authentication - Keycloak (SSO / OAuth2)
   # ---------------------------------------------------------------------------
   authentication:
-    image: ghcr.io/rural-environmental-registry/rer-auth-keycloak:${RER_VERSION:-1.0.0}
+    image: localhost/rer-auth-keycloak:local
     container_name: rer-authentication
     environment:
       KC_DB: postgres
@@ -167,7 +169,7 @@ services:
   # Authentication Frontend (Vue.js 3 + Nginx)
   # ---------------------------------------------------------------------------
   authentication-frontend:
-    image: ghcr.io/rural-environmental-registry/rer-auth-frontend:${RER_VERSION:-1.0.0}
+    image: localhost/rer-auth-frontend:local
     container_name: rer-auth-frontend
     depends_on:
       - authentication-backend
@@ -181,7 +183,7 @@ services:
   # Admin API para gerenciamento de usuários e permissões
   # ---------------------------------------------------------------------------
   authentication-backend:
-    image: ghcr.io/rural-environmental-registry/rer-auth-backend:${RER_VERSION:-1.0.0}
+    image: localhost/rer-auth-backend:local
     container_name: rer-auth-backend
     depends_on:
       authentication-db:
