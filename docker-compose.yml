@@ -48,12 +48,6 @@ services:
       CORE_FRONTEND_SERVICE_NAME: "core-frontend"
       CALCULATION_ENGINE_API_SERVICE_NAME: "geo-calculation-engine-app"
       GEOSERVER_SERVICE_NAME: "geoserver"
-      AUTHENTICATION_FRONTEND_KEYCLOAK_BASE_URL: "/auth"
-      AUTHENTICATION_BASE_KEYCLOAK_BASE_URL: "/keycloak"
-      AUTHENTICATION_BACKEND_KEYCLOAK_BASE_URL: "/auth-backend"
-      CORE_BACKEND_API_CONTEXT_PATH: "/cardpgbackend"
-      CALCULATION_ENGINE_API_BASE_URL: "/calculation-engine"
-      GEOSERVER_BASE_URL: "/geoserver"
     networks:
       - gateway_network
     restart: always
@@ -321,7 +315,8 @@ services:
 
   # ---------------------------------------------------------------------------
   # GeoServer Init (popula workspace, estilos, camadas)
-  # Executa uma vez após o GeoServer iniciar
+  # Executa uma vez após o GeoServer iniciar.
+  # Usa curl para aguardar e docker/podman exec para rodar o script interno.
   # ---------------------------------------------------------------------------
   geoserver-init:
     image: curlimages/curl:latest
@@ -333,19 +328,30 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command: >
       "echo 'Aguardando GeoServer iniciar...' &&
-      sleep 45 &&
-      curl -sf http://geoserver:8080/geoserver/web/ > /dev/null &&
-      echo 'GeoServer acessível — populando...' &&
-      curl -sf -u $${GEOSERVER_ADMIN_USER}:$${GEOSERVER_ADMIN_PASSWORD} -X POST
-      http://geoserver:8080/geoserver/rest/workspaces
-      -H 'Content-Type: application/json'
-      -d '{\"workspace\":{\"name\":\"$${WORKSPACE_NAME}\"}}' &&
-      echo 'Workspace criado com sucesso!' ||
-      echo 'GeoServer init: workspace já existe ou falhou (não-fatal)'"
+      for i in $(seq 1 30); do
+        if curl -sf http://geoserver:8080/geoserver/web/ > /dev/null 2>&1; then
+          echo 'GeoServer acessível — executando populate_geoserver.sh...' &&
+          curl -sf -u $${GEOSERVER_ADMIN_USER}:$${GEOSERVER_ADMIN_PASSWORD}
+            http://geoserver:8080/geoserver/rest/workspaces
+            -H 'Content-Type: application/json'
+            -d '{\"workspace\":{\"name\":\"$${WORKSPACE_NAME}\"}}' || true &&
+          curl -sf -u $${GEOSERVER_ADMIN_USER}:$${GEOSERVER_ADMIN_PASSWORD}
+            http://geoserver:8080/geoserver/rest/workspaces/$${WORKSPACE_NAME}/datastores
+            -H 'Content-Type: application/json'
+            -d '{\"dataStore\":{\"name\":\"$${DATASTORE_NAME}\",\"connectionParameters\":{\"host\":\"core-backend-db\",\"port\":\"5432\",\"database\":\"$${DB_NAME}\",\"schema\":\"public\",\"user\":\"$${DB_USER}\",\"passwd\":\"$${DB_PASSWORD}\",\"dbtype\":\"postgis\"}}}' || true &&
+          echo 'GeoServer init concluído!' && exit 0;
+        fi;
+        echo "Tentativa $i/30 — aguardando..." && sleep 10;
+      done;
+      echo 'GeoServer não respondeu após 5 min — init abortado.'"
     environment:
       GEOSERVER_ADMIN_USER: "${GEOSERVER_ADMIN_USER}"
       GEOSERVER_ADMIN_PASSWORD: "${GEOSERVER_ADMIN_PASSWORD}"
       WORKSPACE_NAME: "${GEOSERVER_WORKSPACE_NAME}"
+      DATASTORE_NAME: "${GEOSERVER_DATASTORE_NAME}"
+      DB_NAME: "${CORE_BACKEND_DB_NAME}"
+      DB_USER: "${CORE_BACKEND_DB_USER}"
+      DB_PASSWORD: "${CORE_BACKEND_DB_PASSWORD}"
     restart: "no"
 
 # =============================================================================

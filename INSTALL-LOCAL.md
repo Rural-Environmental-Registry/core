@@ -10,6 +10,16 @@
 git clone https://github.com/Rural-Environmental-Registry/core.git
 cd core
 cp .env.example .env
+
+# Build local das imagens (necessário na primeira vez)
+# Requer os repos irmãos clonados em ../frontend, ../authentication, ../backend
+podman build --build-arg VITE_BASE_URL=/ -t rer-core-frontend:local ../frontend
+podman build --build-arg BASE_PATH=/auth --build-arg VITE_BASE_URL=/auth/ -t rer-auth-frontend:local ../authentication/frontend
+podman build -t rer-auth-keycloak:local ../authentication
+podman build -t rer-core-backend:local ../backend
+podman build -t rer-auth-backend:local ../authentication/cardpg
+
+# Subir tudo
 docker compose up -d   # ou: podman compose up -d
 # Aguardar ~50s (Keycloak demora)
 ```

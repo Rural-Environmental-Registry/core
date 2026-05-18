@@ -11,6 +11,8 @@ spring:
               - PUT
               - DELETE
               - OPTIONS
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin
       routes:
         - id: keycloak
           uri: http://${AUTHENTICATION_BASE_KEYCLOAK_SERVICE_NAME:authentication}:8080
