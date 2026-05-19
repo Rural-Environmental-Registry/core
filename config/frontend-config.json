@@ -1,0 +1,19 @@
+{
+  "frontend_project_name": "vuejs-car-dpg-frontend",
+  "frontend_version": "1.0.0",
+  "ci_version": "1.0.0-local",
+  "backend_url": "/cardpgbackend",
+  "vite_base_url": "/",
+  "keycloak_url": "/keycloak",
+  "keycloak_realm": "car-dpg",
+  "keycloak_client_id": "car-dpg-frontend",
+  "mapa_center": [-14.235, -51.925],
+  "mapa_zoom_inicial": 4,
+  "linguagem_padrao": "pt-br",
+  "camadas_mapa": [],
+  "diff_area": {
+    "layer_code": "RURAL_PROPERTY",
+    "is_prohibitive": false,
+    "percentual_limit": 0.2
+  }
+}
