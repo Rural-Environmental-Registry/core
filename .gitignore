@@ -26,7 +26,7 @@ gradlew.bat
 gradle/wrapper/gradle-wrapper.jar
 
 # Environment files
-.env
+#.env
 .env.local
 .env.development
 .env.test

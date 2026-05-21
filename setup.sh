@@ -25,12 +25,12 @@ BRANCH="${RER_BRANCH:-develop}"
 
 # Mapping: GitHub repo name -> local directory name (expected by start.sh)
 declare -A REPOS=(
-    ["frontend"]="Core-Frontend"
-    ["backend"]="Core-Backend"
-    ["authentication"]="Authentication"
-    ["calc_engine"]="Calculation-Engine"
-    ["gateway"]="Gateway"
-    ["map_component"]="Map-Component"
+    ["frontend"]="frontend"
+    ["backend"]="backend"
+    ["authentication"]="authentication"
+    ["calc_engine"]="calc_engine"
+    ["gateway"]="gateway"
+    ["map_component"]="map_component"
 )
 
 # --- Colors ------------------------------------------------------------------
