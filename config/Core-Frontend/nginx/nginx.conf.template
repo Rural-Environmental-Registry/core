@@ -30,8 +30,8 @@ http {
     include /etc/nginx/conf.d/*.conf;
  
     server {
-        listen       80;
-        listen  [::]:80;
+        listen       8080;
+        listen  [::]:8080;
         server_name  ${HOSTNAME_DNS};
  
         #access_log  /var/log/nginx/host.access.log  main;

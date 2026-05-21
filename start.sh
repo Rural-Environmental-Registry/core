@@ -100,6 +100,6 @@ echo "Environment variables loaded and directories prepared successfully."
 echo "Starting Docker Compose environment for RER DPG project..."
 #Build and run the Docker Compose environment
 # # Uncomment the following lines to build without cache and show progress
-docker compose build --progress=plain --no-cache
-docker compose up --force-recreate -d --remove-orphans
+docker compose -f docker-compose.yaml build --progress=plain --no-cache
+docker compose -f docker-compose.yaml up --force-recreate -d --remove-orphans
 echo "Docker Compose environment started successfully."
