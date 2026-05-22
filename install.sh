@@ -307,14 +307,10 @@ http {
 NGINX
 
 # --- 6. Pull and start ---
-# Warn if .env exists but volumes are missing (credential mismatch risk)
-if docker volume ls -q 2>/dev/null | grep -q "rer.*db-data"; then
-  :
-else
-  if [ -f .env ]; then
-    warn "⚠️  Database volumes not found but .env exists. If you see auth errors:"
-    warn "   docker compose down -v && rm .env && ./install.sh"
-  fi
+# Warn if this is a re-install with missing volumes (credential mismatch risk)
+if [ -f docker-compose.yml.bak ] && [ -f .env ] && ! docker volume ls -q 2>/dev/null | grep -q "rer.*db-data"; then
+  warn "⚠️  Database volumes not found but .env exists. If you see auth errors:"
+  warn "   docker compose down -v && rm .env && ./install.sh"
 fi
 
 info "Pulling images (version: $RER_VERSION)..."
