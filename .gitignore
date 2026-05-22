@@ -26,7 +26,7 @@ gradlew.bat
 gradle/wrapper/gradle-wrapper.jar
 
 # Environment files
-#.env
+.env
 .env.local
 .env.development
 .env.test
@@ -69,10 +69,10 @@ package-lock.json
 .continue/
 
 # Cloned repositories (managed by setup.sh, not submodules)
-/Core-Frontend/
-/Core-Backend/
-/Authentication/
-/Calculation-Engine/
-/Gateway/
-/Map-Component/
-/Geoserver/
+/core-frontend/
+/core-backend/
+/authentication/
+/calculation-engine/
+/gateway/
+/map-component/
+/geoserver/

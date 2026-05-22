@@ -8,13 +8,10 @@ RUN apt-get update --allow-insecure-repositories --allow-unauthenticated && \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Fix permissões para rodar como non-root (Kyverno injeta runAsUser:1000)
-# O startup.sh da imagem base precisa escrever nestes paths:
-RUN mkdir -p /opt/additional_libs /opt/geoserver_data && \
-    chmod -R 777 /usr/local/tomcat/conf /opt/additional_libs /opt/geoserver_data && \
-    # O PVC será montado aqui pelo K8s (fsGroup:2000 cuida das permissões do PVC)
-    mkdir -p /opt/geoserver/data_dir && \
-    chmod 777 /opt/geoserver/data_dir
+# Fix permissions for non-root execution (Kyverno injects runAsUser:1000)
+# The base image startup.sh needs write access to these paths:
+RUN mkdir -p /opt/additional_libs /opt/geoserver_data /opt/geoserver/data_dir && \
+    chown -R 1000:1000 /usr/local/tomcat/conf /opt/additional_libs /opt/geoserver_data /opt/geoserver/data_dir
 
 # Copiar scripts
 COPY populate_geoserver.sh /opt/populate_geoserver.sh
