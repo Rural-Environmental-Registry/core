@@ -8,14 +8,16 @@ RUN apt-get update --allow-insecure-repositories --allow-unauthenticated && \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Criar diretório de dados com permissões corretas
-RUN mkdir -p /var/geoserver/datadir && \
-    chown -R root:root /var/geoserver/datadir && \
-    chmod -R 777 /var/geoserver/datadir
+# Fix permissions for non-root execution (Kyverno injects runAsUser:1000)
+# The base image startup.sh needs write access to these paths:
+RUN mkdir -p /opt/additional_libs /opt/geoserver_data /opt/geoserver/data_dir && \
+    chown -R 1000:1000 /usr/local/tomcat/conf /opt/additional_libs /opt/geoserver_data /opt/geoserver/data_dir
 
 # Copiar scripts
 COPY populate_geoserver.sh /opt/populate_geoserver.sh
 RUN chmod +x /opt/populate_geoserver.sh
 
-# Definir variável de ambiente para o data directory
-ENV GEOSERVER_DATA_DIR=/var/geoserver/datadir
+# Apontar data dir para o path do PVC mount
+ENV GEOSERVER_DATA_DIR=/opt/geoserver/data_dir
+
+USER 1000
