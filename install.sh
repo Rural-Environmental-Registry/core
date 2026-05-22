@@ -101,7 +101,7 @@ services:
     networks: [rer-net]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${CORE_DB_USERNAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${CORE_DB_USERNAME} -d ${POSTGRES_DB:-rer}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -117,7 +117,7 @@ services:
     networks: [rer-net]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${KC_DB_USERNAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${KC_DB_USERNAME} -d keycloak"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -133,7 +133,7 @@ services:
     networks: [rer-net]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${CALC_DB_USERNAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${CALC_DB_USERNAME} -d calc_engine"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -307,6 +307,12 @@ http {
 NGINX
 
 # --- 6. Pull and start ---
+# Warn if this is a re-install with missing volumes (credential mismatch risk)
+if [ -f docker-compose.yml.bak ] && [ -f .env ] && ! docker volume ls -q 2>/dev/null | grep -q "rer.*db-data"; then
+  warn "⚠️  Database volumes not found but .env exists. If you see auth errors:"
+  warn "   docker compose down -v && rm .env && ./install.sh"
+fi
+
 info "Pulling images (version: $RER_VERSION)..."
 docker compose pull
 
