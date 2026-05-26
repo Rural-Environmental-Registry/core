@@ -75,7 +75,7 @@ reexec_with_docker_group() {
 
     info "Restarting setup with docker group active (no need to run the script again)..."
     export SETUP_DOCKER_GROUP_ACTIVE=1
-    exec sg docker -c "cd $(printf '%q' "$script_dir") && export SETUP_DOCKER_GROUP_ACTIVE=1 && $(printf '%q' "$script_path") $(printf '%q' "$@")"
+    exec sg docker -c "cd $(printf '%q' "$script_dir") && export SETUP_DOCKER_GROUP_ACTIVE=1 && $(printf '%q' "$script_path")$(printf ' %q' "$@")"
 }
 
 check_docker_access() {
