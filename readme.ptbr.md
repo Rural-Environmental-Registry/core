@@ -347,7 +347,7 @@ docker system prune -a
 
 #### GeoServer: AccessDeniedException no data dir
 
-Se `docker compose logs geoserver` mostrar `AccessDeniedException` em `/var/geoserver/datadir/gwc/geowebcache.xml`, o volume `core_geoserver_data` provavelmente tem arquivos criados como **root**, enquanto o container roda como UID 1000. O contexto `/geoserver` não sobe e o WMS retorna 404.
+Se `docker compose logs geoserver` mostrar `AccessDeniedException` em `/var/geoserver/datadir/gwc/geowebcache.xml`, o volume `core_geoserver_data` provavelmente tem arquivos criados como **root**, enquanto o container roda como UID 999. O contexto `/geoserver` não sobe e o WMS retorna 404.
 
 Correção preservando dados do volume:
 
@@ -360,7 +360,7 @@ docker run --rm \
   --user root \
   --entrypoint chown \
   alpine \
-  -R 1000:1000 /var/geoserver/datadir
+  -R 999:999 /var/geoserver/datadir
 
 docker compose -f docker-compose.yaml build geoserver
 docker compose -f docker-compose.yaml up -d geoserver geoserver-init
