@@ -10,7 +10,7 @@ RUN apt-get update --allow-insecure-repositories --allow-unauthenticated && \
 
 # Permissões em paths estáticos da imagem (runtime usa entrypoint para o volume)
 RUN mkdir -p /opt/additional_libs /opt/geoserver_data /var/geoserver/datadir && \
-    chown -R 1000:1000 /usr/local/tomcat/conf /opt/additional_libs /opt/geoserver_data /var/geoserver/datadir
+    chown -R 999:999 /usr/local/tomcat/conf /opt/additional_libs /opt/geoserver_data /var/geoserver/datadir
 
 COPY populate_geoserver.sh /opt/populate_geoserver.sh
 COPY docker-entrypoint.sh /docker-entrypoint.sh
