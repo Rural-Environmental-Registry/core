@@ -8,16 +8,14 @@ RUN apt-get update --allow-insecure-repositories --allow-unauthenticated && \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Fix permissions for non-root execution (Kyverno injects runAsUser:1000)
-# The base image startup.sh needs write access to these paths:
-RUN mkdir -p /opt/additional_libs /opt/geoserver_data /opt/geoserver/data_dir && \
-    chown -R 1000:1000 /usr/local/tomcat/conf /opt/additional_libs /opt/geoserver_data /opt/geoserver/data_dir
+# Permissões em paths estáticos da imagem (runtime usa entrypoint para o volume)
+RUN mkdir -p /opt/additional_libs /opt/geoserver_data /var/geoserver/datadir && \
+    chown -R 1000:1000 /usr/local/tomcat/conf /opt/additional_libs /opt/geoserver_data /var/geoserver/datadir
 
-# Copiar scripts
 COPY populate_geoserver.sh /opt/populate_geoserver.sh
-RUN chmod +x /opt/populate_geoserver.sh
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /opt/populate_geoserver.sh /docker-entrypoint.sh
 
-# Apontar data dir para o path do PVC mount
-ENV GEOSERVER_DATA_DIR=/opt/geoserver/data_dir
+ENV GEOSERVER_DATA_DIR=/var/geoserver/datadir
 
-USER 1000
+ENTRYPOINT ["/docker-entrypoint.sh"]
