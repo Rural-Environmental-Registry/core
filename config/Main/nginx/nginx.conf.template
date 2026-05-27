@@ -43,13 +43,16 @@ http {
     listen       80;
     server_name  ${HOSTNAME_DNS};
     client_max_body_size 10M;
+    # Resolução em runtime: evita falha do nginx se geoserver ainda não estiver no DNS do compose
+    resolver 127.0.0.11 valid=10s ipv6=off;
 
     location = ${BASE_URL}${GEOSERVER_BASE_URL} {
       return 301 ${BASE_URL}${GEOSERVER_BASE_URL}/;
     }
 
     location ^~ ${BASE_URL}${GEOSERVER_BASE_URL}/ {
-      proxy_pass http://${GEOSERVER_SERVICE_NAME}:8080;
+      set ${DOLLAR}geoserver_upstream ${GEOSERVER_SERVICE_NAME};
+      proxy_pass http://${DOLLAR}geoserver_upstream:8080;
       proxy_set_header Host ${DOLLAR}host;
       proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
       proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
@@ -60,7 +63,8 @@ http {
     }
 
     location ^~ ${BASE_URL}/ {
-      proxy_pass http://${GATEWAY_SERVICE_NAME}:8080;
+      set ${DOLLAR}gateway_upstream ${GATEWAY_SERVICE_NAME};
+      proxy_pass http://${DOLLAR}gateway_upstream:8080;
       proxy_set_header Host ${DOLLAR}host;
       proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
       proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;

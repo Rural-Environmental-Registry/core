@@ -82,6 +82,7 @@ mkdir -p $GEOSERVER_PATH
 envsubst < $GEOSERVER_CONFIG_PATH/docker/docker-compose.yml | envsubst | envsubst > $GEOSERVER_PATH/docker-compose.yml
 cp $GEOSERVER_CONFIG_PATH/docker/Dockerfile $GEOSERVER_PATH/Dockerfile
 cp $GEOSERVER_CONFIG_PATH/docker/populate_geoserver.sh $GEOSERVER_PATH/populate_geoserver.sh
+cp $GEOSERVER_CONFIG_PATH/docker/docker-entrypoint.sh $GEOSERVER_PATH/docker-entrypoint.sh
 
 # Proxy configuration
 if [ -z "$PROXY_HOST" ] || [ -z "$PROXY_PORT" ]; then
