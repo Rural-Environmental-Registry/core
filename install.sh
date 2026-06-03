@@ -15,7 +15,7 @@ info() { echo -e "${GREEN}[RER]${NC} $1"; }
 warn() { echo -e "${YELLOW}[RER]${NC} $1"; }
 error() { echo -e "${RED}[RER]${NC} $1"; exit 1; }
 
-RER_VERSION="${RER_VERSION:-$(cat VERSION 2>/dev/null || echo '1.0.0')}"
+RER_VERSION="${RER_VERSION:-1.0.0}"
 RER_DIR="${RER_DIR:-$HOME/rer}"
 RER_PORT="${RER_PORT:-8080}"
 
