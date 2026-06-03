@@ -5,7 +5,10 @@ services:
     volumes:
       - geoserver_data:/var/geoserver/datadir
     environment:
-      - GEOSERVER_DATA_DIR=/var/geoserver/datadir 
+      - GEOSERVER_DATA_DIR=/var/geoserver/datadir
+      - RUN_UNPRIVILEGED=true
+      - RUN_WITH_USER_UID=999
+      - RUN_WITH_USER_GID=999
       - GEOSERVER_ADMIN_USER=${GEOSERVER_ADMIN_USER}
       - GEOSERVER_ADMIN_PASSWORD=${GEOSERVER_ADMIN_PASSWORD}
       - HTTP_PROXY=${HTTP_PROXY}
