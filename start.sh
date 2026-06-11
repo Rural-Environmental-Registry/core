@@ -29,10 +29,35 @@ fi
 
 # Prepare Core_Frontend directory
 envsubst < $CORE_FRONTEND_CONFIG_PATH/environment/.env | envsubst | envsubst | envsubst > $CORE_FRONTEND_PATH/.env
-envsubst < $CORE_FRONTEND_CONFIG_PATH/docker/Dockerfile | envsubst | envsubst > $CORE_FRONTEND_PATH/Dockerfile
+cp $CORE_FRONTEND_CONFIG_PATH/docker/Dockerfile $CORE_FRONTEND_PATH/Dockerfile
 envsubst  < $CORE_FRONTEND_CONFIG_PATH/docker/docker-compose.yaml | envsubst | envsubst > $CORE_FRONTEND_PATH/docker-compose.yaml
 envsubst  < $CORE_FRONTEND_CONFIG_PATH/nginx/nginx.conf.template > $CORE_FRONTEND_PATH/nginx.conf
-cp -r ./map_component $CORE_FRONTEND_PATH
+
+# Copia map_component para o frontend (sem .git/node_modules — evita erro de permissão no cp)
+sync_map_component_to_frontend() {
+    local src="./map_component"
+    local dest="${CORE_FRONTEND_PATH}/map_component"
+
+    if [ ! -d "$src" ]; then
+        echo "ERRO: pasta map_component não encontrada na raiz do core. Execute ./setup.sh primeiro."
+        exit 1
+    fi
+
+    rm -rf "$dest"
+    mkdir -p "$dest"
+
+    if command -v rsync >/dev/null 2>&1; then
+        rsync -a --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            "$src/" "$dest/"
+    else
+        (cd "$src" && tar --exclude='.git' --exclude='node_modules' -cf - .) | (cd "$dest" && tar -xf -)
+    fi
+
+    echo "map_component sincronizado em ${dest} (sem .git)"
+}
+sync_map_component_to_frontend
 
 # Prepare Core_Backend directory
 envsubst < $CORE_BACKEND_CONFIG_PATH/environment/.env.example | envsubst | envsubst | envsubst > $CORE_BACKEND_PATH/.env
