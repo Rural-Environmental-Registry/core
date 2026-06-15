@@ -36,6 +36,12 @@ envsubst  < $CORE_FRONTEND_CONFIG_PATH/nginx/nginx.conf.template > $CORE_FRONTEN
 # Copia map_component para o frontend (sem .git/node_modules — evita erro de permissão no cp)
 sync_map_component_to_frontend() {
     local src="./map_component"
+
+    if [ -z "${CORE_FRONTEND_PATH}" ]; then
+        echo "ERRO: A variável CORE_FRONTEND_PATH não está definida ou está vazia."
+        exit 1
+    fi
+
     local dest="${CORE_FRONTEND_PATH}/map_component"
 
     if [ ! -d "$src" ]; then
@@ -43,15 +49,15 @@ sync_map_component_to_frontend() {
         exit 1
     fi
 
-    rm -rf "$dest"
-    mkdir -p "$dest"
-
     if command -v rsync >/dev/null 2>&1; then
+        mkdir -p "$dest"
         rsync -a --delete \
             --exclude='.git' \
             --exclude='node_modules' \
             "$src/" "$dest/"
     else
+        rm -rf "$dest"
+        mkdir -p "$dest"
         (cd "$src" && tar --exclude='.git' --exclude='node_modules' -cf - .) | (cd "$dest" && tar -xf -)
     fi
 

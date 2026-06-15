@@ -17,11 +17,16 @@ COPY package.json package-lock.json ./
 # ============================
 FROM dependencies AS deps-processed
 # Pacote local referenciado em package.json como file:./map_component
+COPY map_component/package.json map_component/package-lock.json ./map_component/
+
+# Instala dependências do map_component (lock file versionado)
+RUN --mount=type=cache,target=/root/.npm \
+    sh -c 'cd map_component && npm ci'
+
 COPY ./map_component ./map_component
 
 # Build da biblioteca de mapa (frontend consome dist/index.mjs)
-RUN --mount=type=cache,target=/root/.npm \
-    sh -c 'cd map_component && npm install && npm run build'
+RUN sh -c 'cd map_component && npm run build'
 
 # Instalar dependências com cache otimizado
 RUN --mount=type=cache,target=/root/.npm \
