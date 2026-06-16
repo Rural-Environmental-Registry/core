@@ -30,22 +30,37 @@ fi
 # Prepare Core_Frontend directory
 envsubst < $CORE_FRONTEND_CONFIG_PATH/environment/.env | envsubst | envsubst | envsubst > $CORE_FRONTEND_PATH/.env
 cp $CORE_FRONTEND_CONFIG_PATH/docker/Dockerfile $CORE_FRONTEND_PATH/Dockerfile
+cp $CORE_FRONTEND_CONFIG_PATH/docker/.dockerignore $CORE_FRONTEND_PATH/.dockerignore
 envsubst  < $CORE_FRONTEND_CONFIG_PATH/docker/docker-compose.yaml | envsubst | envsubst > $CORE_FRONTEND_PATH/docker-compose.yaml
 envsubst  < $CORE_FRONTEND_CONFIG_PATH/nginx/nginx.conf.template > $CORE_FRONTEND_PATH/nginx.conf
 
-# Copia map_component para o frontend (sem .git/node_modules — evita erro de permissão no cp)
+# Ensure package-lock.json exists before Docker build (npm ci requires lock aligned with package.json)
+ensure_map_component_package_lock() {
+    local src="./map_component"
+
+    if [ ! -d "$src" ]; then
+        return 0
+    fi
+
+    if [ ! -f "$src/package-lock.json" ] || [ "$src/package.json" -nt "$src/package-lock.json" ]; then
+        echo "WARNING: package-lock.json missing or outdated in map_component — regenerating..."
+        (cd "$src" && npm install --package-lock-only --ignore-scripts)
+    fi
+}
+
+# Sync map_component into frontend (excludes .git/node_modules to avoid permission errors on copy)
 sync_map_component_to_frontend() {
     local src="./map_component"
 
     if [ -z "${CORE_FRONTEND_PATH}" ]; then
-        echo "ERRO: A variável CORE_FRONTEND_PATH não está definida ou está vazia."
+        echo "ERROR: CORE_FRONTEND_PATH is not defined or is empty."
         exit 1
     fi
 
     local dest="${CORE_FRONTEND_PATH}/map_component"
 
     if [ ! -d "$src" ]; then
-        echo "ERRO: pasta map_component não encontrada na raiz do core. Execute ./setup.sh primeiro."
+        echo "ERROR: map_component folder not found at core root. Run ./setup.sh first."
         exit 1
     fi
 
@@ -61,8 +76,20 @@ sync_map_component_to_frontend() {
         (cd "$src" && tar --exclude='.git' --exclude='node_modules' -cf - .) | (cd "$dest" && tar -xf -)
     fi
 
-    echo "map_component sincronizado em ${dest} (sem .git)"
+    # Stale node_modules in dest (e.g. from Docker build) is not removed by rsync --exclude
+    if [ -d "$dest/node_modules" ] && ! rm -rf "$dest/node_modules" 2>/dev/null; then
+        echo "WARNING: could not remove ${dest}/node_modules (permission denied). .dockerignore prevents impact on Docker build."
+    fi
+
+    if [ ! -f "$dest/package-lock.json" ]; then
+        echo "ERROR: package-lock.json not found in ${dest} after sync."
+        echo "Run: cd map_component && npm install --package-lock-only"
+        exit 1
+    fi
+
+    echo "map_component synced to ${dest} (without .git/node_modules)"
 }
+ensure_map_component_package_lock
 sync_map_component_to_frontend
 
 # Prepare Core_Backend directory
