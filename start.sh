@@ -4,6 +4,7 @@
 # Usage: ./start.sh --<stage>
 
 set -e
+set -o pipefail
 
 echo "Loading environment variables and preparing directories..."
 
@@ -27,6 +28,30 @@ else
     exit 1
 fi
 
+# Avoids dangerous redirects (e.g., > /.env) when path variables are empty.
+validate_required_paths() {
+    local missing=0
+    local var
+
+    for var in \
+        CORE_FRONTEND_PATH CORE_FRONTEND_CONFIG_PATH \
+        CORE_BACKEND_PATH CORE_BACKEND_CONFIG_PATH \
+        AUTHENTICATION_PATH AUTHENTICATION_CONFIG_PATH \
+        CALCULATION_ENGINE_PATH CALCULATION_ENGINE_CONFIG_PATH \
+        GATEWAY_PATH GATEWAY_CONFIG_PATH \
+        GEOSERVER_PATH GEOSERVER_CONFIG_PATH; do
+        if [ -z "${!var:-}" ]; then
+            echo "ERROR: ${var} is not defined or is empty."
+            missing=1
+        fi
+    done
+
+    if [ "$missing" -eq 1 ]; then
+        exit 1
+    fi
+}
+validate_required_paths
+
 # Prepare Core_Frontend directory
 envsubst < $CORE_FRONTEND_CONFIG_PATH/environment/.env | envsubst | envsubst | envsubst > $CORE_FRONTEND_PATH/.env
 cp $CORE_FRONTEND_CONFIG_PATH/docker/Dockerfile $CORE_FRONTEND_PATH/Dockerfile
@@ -44,19 +69,24 @@ ensure_map_component_package_lock() {
 
     if [ ! -f "$src/package-lock.json" ] || [ "$src/package.json" -nt "$src/package-lock.json" ]; then
         echo "WARNING: package-lock.json missing or outdated in map_component — regenerating..."
-        (cd "$src" && npm install --package-lock-only --ignore-scripts)
+        if command -v npm >/dev/null 2>&1; then
+            (cd "$src" && npm install --package-lock-only --ignore-scripts)
+        elif command -v docker >/dev/null 2>&1; then
+            docker run --rm -v "$(pwd)/$src:/app" -w /app node:18-alpine \
+                npm install --package-lock-only --ignore-scripts
+        elif command -v podman >/dev/null 2>&1; then
+            podman run --rm -v "$(pwd)/$src:/app" -w /app node:18-alpine \
+                npm install --package-lock-only --ignore-scripts
+        else
+            echo "ERROR: npm, docker or podman is required to generate package-lock.json."
+            exit 1
+        fi
     fi
 }
 
 # Sync map_component into frontend (excludes .git/node_modules to avoid permission errors on copy)
 sync_map_component_to_frontend() {
     local src="./map_component"
-
-    if [ -z "${CORE_FRONTEND_PATH}" ]; then
-        echo "ERROR: CORE_FRONTEND_PATH is not defined or is empty."
-        exit 1
-    fi
-
     local dest="${CORE_FRONTEND_PATH}/map_component"
 
     if [ ! -d "$src" ]; then
