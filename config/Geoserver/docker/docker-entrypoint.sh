@@ -8,7 +8,7 @@ GEOSERVER_GID="${RUN_WITH_USER_GID:-${GEOSERVER_GID:-999}}"
 DATA_DIR="${GEOSERVER_DATA_DIR:-/var/geoserver/datadir}"
 
 mkdir -p "$DATA_DIR"
-if [ "$(id -u)" -eq 0 ] && [ "$(stat -c '%u:%g' "$DATA_DIR")" != "${GEOSERVER_UID}:${GEOSERVER_GID}" ]; then
+if [ "$(id -u)" -eq 0 ]; then
     chown -R "${GEOSERVER_UID}:${GEOSERVER_GID}" "$DATA_DIR"
 fi
 
