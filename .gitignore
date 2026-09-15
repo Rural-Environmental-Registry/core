@@ -67,6 +67,9 @@ package-lock.json
 .kiro
 .amazonq/
 .continue/
+# codebase-memory / ferramentas de indexacao (uso local, nunca versionar)
+.codebase-memory/
+*.db.zst
 
 # Cloned repositories (managed by setup.sh, not submodules)
 /core-frontend/
